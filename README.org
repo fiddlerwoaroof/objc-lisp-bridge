@@ -7,6 +7,13 @@ produce native mac GUIs.  In the long run, I hope to use this as the
 basis for a new mac-native backend for McClim: but we'll see if that
 ever happens.
 
+For the time being, though, this only works on CCL and (sort-of) on
+LispWorks: it works like 95% on SBCL, but there's some weird issue
+that's preventing the window from showing. I hae not tested the code
+on any other implementations, but doing so will require changing a
+couple places in objc-runtime.lisp to inform the code about the new
+lisp's ffi types.
+
 * Installing
 
 1. clone fwoar.lisputils from

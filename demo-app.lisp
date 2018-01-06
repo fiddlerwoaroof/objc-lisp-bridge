@@ -122,7 +122,7 @@
 
 (defun main ()
   ;; (break)
-  (trivial-main-thread:with-body-in-main-thread ()
+  (trivial-main-thread:with-body-in-main-thread (:blocking t)
     (with-selectors ((shared-application "sharedApplication")
                      (process-info "processInfo")
                      (process-name "processName")
