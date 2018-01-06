@@ -9,8 +9,11 @@
                #:uiop
                #:serapeum
                #:fwoar.lisputils
-               #:cffi)
+               #:cffi
+               #:trivial-main-thread
+               #:cffi-libffi)
   :defsystem-depends-on (#:cffi-grovel)
   :components ((:file "package")
                (:cffi-grovel-file "objc-runtime-types" :depends-on ("package"))
-               (:file "objc-runtime" :depends-on ("package" "objc-runtime-types"))))
+               (:file "readtable" :depends-on ("package"))
+               (:file "objc-runtime" :depends-on ("package" "readtable" "objc-runtime-types"))))

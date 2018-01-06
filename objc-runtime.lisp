@@ -1,4 +1,6 @@
 (in-package :objc-runtime)
+(serapeum:eval-always
+ (named-readtables:in-readtable :objc-readtable))
 
 (serapeum:eval-always
   (cffi:define-foreign-library cocoa
@@ -130,28 +132,6 @@
                    class-defs))
      ,@body))
 
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (named-readtables:defreadtable :objc-readtable
-    (:merge :standard)
-    (:syntax-from :standard #\) #\])
-    (:macro-char #\[ (lambda (s char)
-                       char
-                       (destructuring-bind (obj message . args)
-                           (read-delimited-list #\] s t)
-                         `(objc-msg-send ,obj ,message ,@args)))
-                 nil)
-    (:dispatch-macro-char #\# #\@
-                          (lambda (s c b)
-                            c b
-                            (let ((class-name (coerce (loop for c = (read-char s nil nil t)
-                                                         until (or (null c)
-                                                                   (serapeum:whitespacep c))
-                                                         collect c)
-                                                      'string)))
-                              `(objc-look-up-class ,class-name))))))
-
-(named-readtables:in-readtable :objc-readtable)
 
 (defgeneric make-objc-instance (class &rest args)
   (:method ((class string) &rest args)

@@ -9,6 +9,13 @@
     (format t "~&Exxception: ~a~%" [exception reason])
     (values)))
 
+(cffi:defcfun (init-window "initWindow")
+    :pointer
+  (window :pointer)
+  (rect (:pointer (:struct objc-runtime:ns-rect)))
+  (a :char)
+  (b :char)
+  (c :boolean))
 
 #+null
 (cffi:defcfun (set-uncaught-exception-handler "set_uncaught_exception_handler"
@@ -70,32 +77,34 @@
                            '(:struct objc-runtime:ns-rect)))
 
 (defun main ()
-  (with-selectors ((shared-application "sharedApplication")
-                   (process-info "processInfo")
-                   (process-name "processName")
-                   (set-activation-policy "setActivationPolicy:")
-                   (init-with-content-rect "initWithContentRect:styleMask:backing:defer:")
-                   (set-title "setTitle:")
-                   (run "run")
-                   (activate-ignoring-other-apps "activateIgnoringOtherApps:")
-                   alloc
-                   (make-key-and-order-front "makeKeyAndOrderFront:")
-                   (cascade-top-left-from-point "cascadeTopLeftFromPoint:")
-                   ;; (application-should-terminate "applicationShouldTerminate:")
-                   ;; (set-delegate "setDelegate:")
-                   ;; (finish-launching "finishLaunching")
-                   )
-    [#@NSApplication shared-application]
-    [objc-runtime::ns-app set-activation-policy :int 0]
+  (trivial-main-thread:with-body-in-main-thread ()
+    (with-selectors ((shared-application "sharedApplication")
+                     (process-info "processInfo")
+                     (process-name "processName")
+                     (set-activation-policy "setActivationPolicy:")
+                     (init-with-content-rect "initWithContentRect:styleMask:backing:defer:")
+                     (set-title "setTitle:")
+                     (run "run")
+                     (activate-ignoring-other-apps "activateIgnoringOtherApps:")
+                     alloc
+                     (make-key-and-order-front "makeKeyAndOrderFront:")
+                     (cascade-top-left-from-point "cascadeTopLeftFromPoint:")
+                     ;; (application-should-terminate "applicationShouldTerminate:")
+                     ;; (set-delegate "setDelegate:")
+                     ;; (finish-launching "finishLaunching")
+                     )
+      [#@NSApplication shared-application]
+      [objc-runtime::ns-app set-activation-policy :int 0]
 
-    (break)
-    (let* ((application-name [[#@NSProcessInfo process-info] process-name]))
-      (with-point (p (20 20))
-        (let* ((the-window [#@NSWindow alloc]))
-          [the-window init-with-content-rect :pointer (make-rect 10 10 120 120)
-                                             :char 1 :char 2 :boolean nil]
-          [the-window cascade-top-left-from-point :pointer p]
-          [the-window set-title :pointer application-name]
-          [the-window make-key-and-order-front :pointer (cffi:null-pointer)]
-          [ objc-runtime::ns-app activate-ignoring-other-apps :boolean t]
-          [ objc-runtime::ns-app run])))))
+      ;; (break)
+      (let* ((application-name [[#@NSProcessInfo process-info] process-name]))
+        (with-point (p (20 20))
+          (let* ((the-window [#@NSWindow alloc])
+                 (foreign-rect (make-rect 10 10 120 120)))
+            (format t "~&My rect: ~s~%" (cffi:convert-from-foreign foreign-rect '(:struct objc-runtime::ns-rect)))
+            (init-window the-window foreign-rect 1 2 nil)
+            [the-window cascade-top-left-from-point :pointer p]
+            [the-window set-title :pointer application-name]
+            [the-window make-key-and-order-front :pointer (cffi:null-pointer)]
+            [ objc-runtime::ns-app activate-ignoring-other-apps :boolean t]
+            [ objc-runtime::ns-app run]))))))
