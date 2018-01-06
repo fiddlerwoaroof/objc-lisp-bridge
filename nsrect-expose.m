@@ -21,3 +21,6 @@ EXPORT id initWindow(NSWindow *window, NSRect *rect, char a, char b, Boolean c) 
                            styleMask: a
                              backing: b
                                defer: c];}
+EXPORT id initWithFrame(id thing, NSRect *rect) {
+  printf("Got a rect: (%f %f), (%f %f)\n", rect->size.width, rect->size.height, rect->origin.x, rect->origin.y);
+  return [thing initWithFrame: *rect];}

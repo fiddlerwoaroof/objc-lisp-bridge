@@ -15,7 +15,8 @@
                           c b
                           (let ((class-name (coerce (loop for c = (read-char s nil nil t)
                                                        until (or (null c)
-                                                                 (serapeum:whitespacep c))
+                                                                 (serapeum:whitespacep c)
+                                                                 (member c '(#\) #\(  #\[ #\])))
                                                        collect c)
                                                     'string)))
                             `(objc-look-up-class ,class-name)))))

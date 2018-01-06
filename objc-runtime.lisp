@@ -83,6 +83,42 @@
     :string
   (sel o-selector))
 
+(defcfun (class-get-instance-variable "class_getInstanceVariable" :library foundation)
+    :pointer
+  (cls o-class)
+  (name :string))
+
+(defcfun (class-get-instance-variable "class_addMethod" :library foundation)
+    :pointer
+  (cls o-class)
+  (sel :pointer)
+  (imp :pointer)
+  (type :string))
+
+(defcfun (object-get-class "object_getClass" :library foundation)
+    :pointer
+  (object :pointer))
+
+(defcfun (object-get-ivar "object_getIvar" :library foundation)
+    :pointer
+  (object :pointer)
+  (ivar :pointer))
+
+(defcfun (class-get-property "class_getProperty" :library foundation)
+    :pointer
+  (cls o-class)
+  (name :string))
+
+(defcfun (property-copy-attribute-value "property_copyAttributeValue" :library foundation)
+    :string
+  (prop :pointer)
+  (name :string))
+
+
+(defcfun (property-get-attributes "property_getAttributes" :library foundation)
+    :string
+  (prop :pointer))
+
 (defgeneric get-methods (class)
   (:method ((class string))
     (get-methods (objc-look-up-class class)))

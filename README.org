@@ -1,0 +1,18 @@
+* Intro
+  
+CCL and LispWorks and other implementations have their own bridges to
+the objective-c runtime.  This project is an attempt to create a
+bridge that only uses CFFI so that arbitrary lisp implementations can
+produce native mac GUIs.  In the long run, I hope to use this as the
+basis for a new mac-native backend for McClim: but we'll see if that
+ever happens.
+
+* Installing
+
+1. clone fwoar.lisputils from
+   https://github.com/fiddlerwoaroof/fwoar.lisputils and put it
+   somewhere quicklisp can find it (e.g. ~/quicklisp/local-projects)
+2. run the demo:
+   #+BEGIN_SRC sh
+make run CCL=/path/to/ccl
+   #+END_SRC

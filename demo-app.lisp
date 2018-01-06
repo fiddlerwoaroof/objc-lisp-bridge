@@ -17,15 +17,24 @@
   (b :char)
   (c :boolean))
 
+(cffi:defcfun (init-with-frame "initWithFrame")
+    :pointer
+  (thing :pointer)
+  (rect :pointer))
+
 (cffi:defcfun (print-rect "printRect")
     :void
   (rect (:struct objc-runtime::ns-rect)))
 
-#+null
 (cffi:defcfun (set-uncaught-exception-handler "set_uncaught_exception_handler"
                                               :library objc-runtime::expose-stuff)
     :void
   (cb :pointer))
+
+(defun value-for-key (thing key)
+  (with-selectors ((vfk "valueForKey:"))
+    (let ((key (make-nsstring key)))
+      [thing vfk :string key])))
 
 (defun call-with-rect (x y w h cb)
   (check-type x real)
@@ -80,8 +89,39 @@
                               ,(coerce h 'double-float)))
                            '(:struct objc-runtime:ns-rect)))
 
+(defun make-nsstring (str)
+  (with-selectors (alloc (init-with-encoding "initWithCString:length:"))
+    [[#@NSString alloc] init-with-encoding :string str :uint (length str)]))
+
+(defun show-alert (message)
+  (with-selectors ((set-message-text "setMessageText:")
+                   (set-informative-text "setInformativeText:")
+                   (add-button-with-title "addButtonWithTitle:")
+                   (run-modal "runModal")
+                   alloc init)
+    (let ((alert [[#@NSAlert alloc] init]))
+      [alert set-message-text :pointer (make-nsstring message)]
+      [alert set-informative-text :pointer (make-nsstring "Informative text.")]
+      [alert add-button-with-title :pointer (make-nsstring "Cancel")]
+      [alert add-button-with-title :pointer (make-nsstring "OK")]
+      [alert run-modal])))
+
+(cffi:defcallback button-action :void ((a :pointer) (b :pointer) (sender :pointer))
+  (declare (ignore a b sender))
+  (show-alert "Hello There!"))
+
+(defun make-button-delegate (button)
+  (let ((my-class (objc-runtime::objc-allocate-class-pair #@NSObject "ButtonDel" 0)))
+    (with-selectors ((do-magic "doMagic:") (set-target "setTarget:") (set-action "setAction:")
+                     alloc init)
+      (objc-runtime::class-add-method my-class do-magic (cffi:callback button-action)
+                                      "v@:@")
+      (fw.lu:prog1-bind (result [[my-class alloc] init])
+        [button set-target :pointer result]
+        [button set-action :pointer do-magic]))))
+
 (defun main ()
-  (break)
+  ;; (break)
   (trivial-main-thread:with-body-in-main-thread ()
     (with-selectors ((shared-application "sharedApplication")
                      (process-info "processInfo")
@@ -98,6 +138,11 @@
                      (init-with-title "initWithTitle:action:keyEquivalent:")
                      (set-submenu "setSubmenu:")
                      (init-with-encoding "initWithCString:length:")
+                     (content-view "contentView")
+                     (add-subview "addSubview:")
+                     (set-target "setTarget:")
+                     (set-action "setAction:")
+                     (set-title "setTitle:")
                      terminate?
                      ;; (application-should-terminate "applicationShouldTerminate:")
                      ;; (set-delegate "setDelegate:")
@@ -123,12 +168,19 @@
           [objc-runtime::ns-app set-main-menu :pointer menubar] )
 
         (with-point (p (20 20))
-          (let* ((the-window [#@NSWindow alloc])
-                 (foreign-rect (make-rect 10 10 120 120)))
+          (let* ((foreign-rect (make-rect 10 10 120 120))
+                 (the-window (init-window [#@NSWindow alloc] foreign-rect 1 2 nil))
+                 (the-button (init-with-frame [#@NSButton alloc] (make-rect 10 10 100 100))))
+            (format t "~{~&~a~%~}"
+                    (sort (objc-runtime::get-method-names (objc-runtime::object-get-class [the-window content-view]))
+                          #'string-lessp))
             (format t "~&My rect: ~s~%"
                     (cffi:convert-from-foreign foreign-rect
                                                '(:struct objc-runtime::ns-rect)))
-            (init-window the-window foreign-rect 1 2 nil)
+            
+            [the-button set-title :pointer (make-nsstring "Click me!")]
+            (make-button-delegate the-button)
+            [(value-for-key the-window "contentView") add-subview :pointer the-button]
             [the-window cascade-top-left-from-point :pointer p]
             [the-window set-title :pointer application-name]
             [the-window make-key-and-order-front :pointer (cffi:null-pointer)]
