@@ -4,3 +4,11 @@ foo*
 ns-test
 *.dylib
 *~
+*grovel*
+a.out
+GPATH
+GRTAGS
+GTAGS
+.*.dSYM
+*.dSYM
+*~
