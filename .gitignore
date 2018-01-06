@@ -12,3 +12,9 @@ GTAGS
 .*.dSYM
 *.dSYM
 *~
+*.o
+.[#]*[#]
+[#]*
+*.old
+nsrect-expose.c
+test.c

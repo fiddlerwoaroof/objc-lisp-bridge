@@ -12,10 +12,14 @@
 (cffi:defcfun (init-window "initWindow")
     :pointer
   (window :pointer)
-  (rect (:pointer (:struct objc-runtime:ns-rect)))
+  (rect :pointer)
   (a :char)
   (b :char)
   (c :boolean))
+
+(cffi:defcfun (print-rect "printRect")
+    :void
+  (rect (:struct objc-runtime::ns-rect)))
 
 #+null
 (cffi:defcfun (set-uncaught-exception-handler "set_uncaught_exception_handler"
@@ -28,9 +32,9 @@
   (check-type y real)
   (check-type w real)
   (check-type h real)
-  (cffi:with-foreign-object (rect '(:struct ns-rect))
+  (cffi:with-foreign-object (rect '(:struct objc-runtime::ns-rect))
     (cffi:with-foreign-slots (((:pointer ns-rect-origin) (:pointer ns-rect-size))
-                              rect (:struct ns-rect))
+                              rect (:struct objc-runtime::ns-rect))
       (cffi:with-foreign-slots ((ns-point-x ns-point-y) ns-rect-origin (:struct ns-point))
         (setf ns-point-x (coerce x 'double-float)
               ns-point-y (coerce y 'double-float)))
@@ -77,31 +81,53 @@
                            '(:struct objc-runtime:ns-rect)))
 
 (defun main ()
+  (break)
   (trivial-main-thread:with-body-in-main-thread ()
     (with-selectors ((shared-application "sharedApplication")
                      (process-info "processInfo")
                      (process-name "processName")
                      (set-activation-policy "setActivationPolicy:")
-                     (init-with-content-rect "initWithContentRect:styleMask:backing:defer:")
+                     ;; (init-with-content-rect "initWithContentRect:styleMask:backing:defer:")
                      (set-title "setTitle:")
                      (run "run")
                      (activate-ignoring-other-apps "activateIgnoringOtherApps:")
-                     alloc
                      (make-key-and-order-front "makeKeyAndOrderFront:")
                      (cascade-top-left-from-point "cascadeTopLeftFromPoint:")
+                     (add-item "addItem:")
+                     (set-main-menu "setMainMenu:")
+                     (init-with-title "initWithTitle:action:keyEquivalent:")
+                     (set-submenu "setSubmenu:")
+                     (init-with-encoding "initWithCString:length:")
+                     terminate?
                      ;; (application-should-terminate "applicationShouldTerminate:")
                      ;; (set-delegate "setDelegate:")
                      ;; (finish-launching "finishLaunching")
+                     alloc new autorelease
                      )
+      [#@NSAutoReleasePool new]
       [#@NSApplication shared-application]
       [objc-runtime::ns-app set-activation-policy :int 0]
 
       ;; (break)
       (let* ((application-name [[#@NSProcessInfo process-info] process-name]))
+        (let* ((menubar [[#@NSMenu new] autorelease])
+               (app-menu-item [[#@NSMenuItem new] autorelease])
+               (app-menu [[#@NSMenu new] autorelease])
+               (quit-name [[#@NSString alloc] init-with-encoding :string "Quit" :uint 4])
+               (key [[#@NSString alloc] init-with-encoding :string "q" :uint 1])
+               (quit-menu-item
+                [[[#@NSMenuItem alloc] init-with-title :pointer quit-name :pointer terminate? :string key] autorelease]))
+          [menubar add-item :pointer app-menu-item]
+          [app-menu add-item :pointer quit-menu-item]
+          [app-menu-item set-submenu :pointer app-menu]
+          [objc-runtime::ns-app set-main-menu :pointer menubar] )
+
         (with-point (p (20 20))
           (let* ((the-window [#@NSWindow alloc])
                  (foreign-rect (make-rect 10 10 120 120)))
-            (format t "~&My rect: ~s~%" (cffi:convert-from-foreign foreign-rect '(:struct objc-runtime::ns-rect)))
+            (format t "~&My rect: ~s~%"
+                    (cffi:convert-from-foreign foreign-rect
+                                               '(:struct objc-runtime::ns-rect)))
             (init-window the-window foreign-rect 1 2 nil)
             [the-window cascade-top-left-from-point :pointer p]
             [the-window set-title :pointer application-name]

@@ -86,6 +86,16 @@
 (defgeneric get-methods (class)
   (:method ((class string))
     (get-methods (objc-look-up-class class)))
+
+  #+ccl
+  (:method ((class ccl:macptr))
+    (with-foreign-object (num-methods :int)
+      (let ((methods (class-copy-method-list class num-methods)))
+        (let ((result (list)))
+          (dotimes (n (mem-aref num-methods :int) (nreverse result))
+            (push (mem-aref methods :pointer n)
+                  result))))))
+
   #+sbcl
   (:method ((class sb-sys:system-area-pointer))
     (with-foreign-object (num-methods :int)
@@ -111,8 +121,13 @@
 
 (defparameter *selector-cache* (make-hash-table :test 'equal))
 
+(serapeum:eval-always
+  (defun normalize-selector-name (sel-name)
+    (substitute #\: #\? sel-name)))
+
 (defun ensure-selector (name)
-  (alexandria:ensure-gethash name *selector-cache*
+  (alexandria:ensure-gethash name
+                             *selector-cache*
                              (sel-register-name name)))
 
 (defmacro with-selectors ((&rest selector-specs) &body body)
@@ -120,7 +135,8 @@
                      `(,sym (ensure-selector ,foreign-selector)))
                    (mapcar (fw.lu:glambda (spec)
                              (:method ((spec symbol))
-                               (list spec (string-downcase spec)))
+                               (list spec (normalize-selector-name
+                                           (string-downcase spec))))
                              (:method ((spec cons))
                                (list (car spec) (cadr spec))))
                            selector-specs)))
