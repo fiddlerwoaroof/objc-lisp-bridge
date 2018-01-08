@@ -23,3 +23,7 @@ demo-app
 demo.app
 *.framework
 .DS_Store
+*.iconset
+*.png
+*.icns
+NSRect-Expose
