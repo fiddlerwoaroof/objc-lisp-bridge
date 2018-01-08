@@ -19,3 +19,7 @@ GTAGS
 nsrect-expose.c
 test.c
 .[#]*
+demo-app
+demo.app
+*.framework
+.DS_Store

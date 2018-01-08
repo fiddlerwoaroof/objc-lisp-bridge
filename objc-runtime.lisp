@@ -40,13 +40,6 @@
   (class :pointer)
   (protocol :pointer))
 
-(defcfun (class-add-method "class_addMethod" :library foundation)
-    :boolean
-  (class :pointer)
-  (selector :pointer)
-  (cb :pointer)
-  (type :string))
-
 (defcfun (objc-class-get-name "class_getName" :library foundation)
     :string
   (cls o-class))
@@ -88,12 +81,13 @@
   (cls o-class)
   (name :string))
 
-(defcfun (class-get-instance-variable "class_addMethod" :library foundation)
-    :pointer
-  (cls o-class)
-  (sel :pointer)
-  (imp :pointer)
+(defcfun (class-add-method "class_addMethod" :library foundation)
+    :boolean
+  (class :pointer)
+  (selector :pointer)
+  (cb :pointer)
   (type :string))
+
 
 (defcfun (object-get-class "object_getClass" :library foundation)
     :pointer
@@ -141,6 +135,10 @@
             (push (mem-aref methods :pointer n)
                   result)))))))
 
+(defun make-nsstring (str)
+  [[#@NSString @(alloc)] @(initWithCString:encoding:) :string str :uint 1])
+
+
 (defun get-method-names (thing)
   (mapcar (alexandria:compose #'sel-get-name
                               #'method-get-name)
@@ -148,6 +146,7 @@
 
 (defgeneric graph->dot (graph stream)
   (:method :around (graph stream)
+     (declare (ignore graph))
 	   (format stream "~&digraph {~%~4trankdir=LR;~%")
 	   (call-next-method)
 	   (format stream "~&}"))

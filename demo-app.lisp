@@ -33,7 +33,7 @@
 
 (defun value-for-key (thing key)
   (with-selectors ((vfk "valueForKey:"))
-    (let ((key (make-nsstring key)))
+    (let ((key (objc-runtime::make-nsstring key)))
       [thing vfk :string key])))
 
 (defun call-with-rect (x y w h cb)
@@ -89,22 +89,13 @@
                               ,(coerce h 'double-float)))
                            '(:struct objc-runtime:ns-rect)))
 
-(defun make-nsstring (str)
-  (with-selectors (alloc (init-with-encoding "initWithCString:length:"))
-    [[#@NSString alloc] init-with-encoding :string str :uint (length str)]))
-
 (defun show-alert (message)
-  (with-selectors ((set-message-text "setMessageText:")
-                   (set-informative-text "setInformativeText:")
-                   (add-button-with-title "addButtonWithTitle:")
-                   (run-modal "runModal")
-                   alloc init)
-    (let ((alert [[#@NSAlert alloc] init]))
-      [alert set-message-text :pointer (make-nsstring message)]
-      [alert set-informative-text :pointer (make-nsstring "Informative text.")]
-      [alert add-button-with-title :pointer (make-nsstring "Cancel")]
-      [alert add-button-with-title :pointer (make-nsstring "OK")]
-      [alert run-modal])))
+  (let ((alert [[#@NSAlert @(alloc)] @(init)]))
+    [alert @(setMessageText:) :pointer @"message"]
+    [alert @(setInformativeText:) :pointer @"Informative text."]
+    [alert @(addButtonWithTitle:) :pointer @"OK"]
+    [alert @(addButtonWithTitle:) :pointer @"Cancel"]
+    [alert @(runModal)]))
 
 (cffi:defcallback button-action :void ((a :pointer) (b :pointer) (sender :pointer))
   (declare (ignore a b sender))
@@ -120,69 +111,70 @@
         [button set-target :pointer result]
         [button set-action :pointer do-magic]))))
 
+(defparameter *main-task* nil)
 (defun main ()
   ;; (break)
-  (trivial-main-thread:with-body-in-main-thread (:blocking t)
-    (with-selectors ((shared-application "sharedApplication")
-                     (process-info "processInfo")
-                     (process-name "processName")
-                     (set-activation-policy "setActivationPolicy:")
-                     ;; (init-with-content-rect "initWithContentRect:styleMask:backing:defer:")
-                     (set-title "setTitle:")
-                     (run "run")
-                     (activate-ignoring-other-apps "activateIgnoringOtherApps:")
-                     (make-key-and-order-front "makeKeyAndOrderFront:")
-                     (cascade-top-left-from-point "cascadeTopLeftFromPoint:")
-                     (add-item "addItem:")
-                     (set-main-menu "setMainMenu:")
-                     (init-with-title "initWithTitle:action:keyEquivalent:")
-                     (set-submenu "setSubmenu:")
-                     (init-with-encoding "initWithCString:length:")
-                     (content-view "contentView")
-                     (add-subview "addSubview:")
-                     (set-target "setTarget:")
-                     (set-action "setAction:")
-                     (set-title "setTitle:")
-                     terminate?
-                     ;; (application-should-terminate "applicationShouldTerminate:")
-                     ;; (set-delegate "setDelegate:")
-                     ;; (finish-launching "finishLaunching")
-                     alloc new autorelease
-                     )
-      [#@NSAutoReleasePool new]
-      [#@NSApplication shared-application]
-      [objc-runtime::ns-app set-activation-policy :int 0]
+  (setf *main-task*
+        (trivial-main-thread:with-body-in-main-thread (:blocking t)
+          (with-selectors ((shared-application "sharedApplication")
+                           (process-info "processInfo")
+                           (process-name "processName")
+                           (set-activation-policy "setActivationPolicy:")
+                           ;; (init-with-content-rect "initWithContentRect:styleMask:backing:defer:")
+                           (set-title "setTitle:")
+                           (run "run")
+                           (activate-ignoring-other-apps "activateIgnoringOtherApps:")
+                           (make-key-and-order-front "makeKeyAndOrderFront:")
+                           (cascade-top-left-from-point "cascadeTopLeftFromPoint:")
+                           (add-item "addItem:")
+                           (set-main-menu "setMainMenu:")
+                           (init-with-title "initWithTitle:action:keyEquivalent:")
+                           (set-submenu "setSubmenu:")
+                           (init-with-encoding "initWithCString:length:")
+                           (content-view "contentView")
+                           (add-subview "addSubview:")
+                           (set-target "setTarget:")
+                           (set-action "setAction:")
+                           terminate?
+                           ;; (application-should-terminate "applicationShouldTerminate:")
+                           ;; (set-delegate "setDelegate:")
+                           ;; (finish-launching "finishLaunching")
+                           alloc new autorelease
+                           )
+            [#@NSAutoReleasePool new]
+            [#@NSApplication shared-application]
+            [objc-runtime::ns-app set-activation-policy :int 0]
 
-      ;; (break)
-      (let* ((application-name [[#@NSProcessInfo process-info] process-name]))
-        (let* ((menubar [[#@NSMenu new] autorelease])
-               (app-menu-item [[#@NSMenuItem new] autorelease])
-               (app-menu [[#@NSMenu new] autorelease])
-               (quit-name [[#@NSString alloc] init-with-encoding :string "Quit" :uint 4])
-               (key [[#@NSString alloc] init-with-encoding :string "q" :uint 1])
-               (quit-menu-item
-                [[[#@NSMenuItem alloc] init-with-title :pointer quit-name :pointer terminate? :string key] autorelease]))
-          [menubar add-item :pointer app-menu-item]
-          [app-menu add-item :pointer quit-menu-item]
-          [app-menu-item set-submenu :pointer app-menu]
-          [objc-runtime::ns-app set-main-menu :pointer menubar] )
+            ;; (break)
+            (let* ((application-name [[#@NSProcessInfo process-info] process-name]))
+              (let* ((menubar [[#@NSMenu new] autorelease])
+                     (app-menu-item [[#@NSMenuItem new] autorelease])
+                     (app-menu [[#@NSMenu new] autorelease])
+                     (quit-name [[#@NSString alloc] init-with-encoding :string "Quit" :uint 4])
+                     (key [[#@NSString alloc] init-with-encoding :string "q" :uint 1])
+                     (quit-menu-item
+                      [[[#@NSMenuItem alloc] init-with-title :pointer quit-name :pointer terminate? :string key] autorelease]))
+                [menubar add-item :pointer app-menu-item]
+                [app-menu add-item :pointer quit-menu-item]
+                [app-menu-item set-submenu :pointer app-menu]
+                [objc-runtime::ns-app set-main-menu :pointer menubar] )
 
-        (with-point (p (20 20))
-          (let* ((foreign-rect (make-rect 10 10 120 120))
-                 (the-window (init-window [#@NSWindow alloc] foreign-rect 1 2 nil))
-                 (the-button (init-with-frame [#@NSButton alloc] (make-rect 10 10 100 100))))
-            (format t "~{~&~a~%~}"
-                    (sort (objc-runtime::get-method-names (objc-runtime::object-get-class [the-window content-view]))
-                          #'string-lessp))
-            (format t "~&My rect: ~s~%"
-                    (cffi:convert-from-foreign foreign-rect
-                                               '(:struct objc-runtime::ns-rect)))
-            
-            [the-button set-title :pointer (make-nsstring "Click me!")]
-            (make-button-delegate the-button)
-            [(value-for-key the-window "contentView") add-subview :pointer the-button]
-            [the-window cascade-top-left-from-point :pointer p]
-            [the-window set-title :pointer application-name]
-            [the-window make-key-and-order-front :pointer (cffi:null-pointer)]
-            [ objc-runtime::ns-app activate-ignoring-other-apps :boolean t]
-            [ objc-runtime::ns-app run]))))))
+              (with-point (p (20 20))
+                (let* ((foreign-rect (make-rect 10 10 120 120))
+                       (the-window (init-window [#@NSWindow alloc] foreign-rect 1 2 nil))
+                       (the-button
+                        (init-with-frame [#@NSButton alloc] (make-rect 10 10 100 35)))
+                       (the-button1
+                        (init-with-frame [#@NSButton alloc] (make-rect 10 55 100 35)))
+                       )
+                  
+                  [the-button set-title :pointer @"Click me!"]
+                  (make-button-delegate the-button)
+                  (make-button-delegate the-button1)
+                  [(value-for-key the-window "contentView") add-subview :pointer the-button]
+                  [(value-for-key the-window "contentView") add-subview :pointer the-button1]
+                  [the-window cascade-top-left-from-point :pointer p]
+                  [the-window set-title :pointer application-name]
+                  [the-window make-key-and-order-front :pointer (cffi:null-pointer)]
+                  [ objc-runtime::ns-app activate-ignoring-other-apps :boolean t]
+                  [ objc-runtime::ns-app run])))))))
