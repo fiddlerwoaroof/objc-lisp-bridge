@@ -6,32 +6,35 @@ dylib: nsrect-expose.m libnsrect-expose.dylib
 			nsrect-expose.m \
 			-o libnsrect-expose.dylib
 demo-app: dylib
-	$(CCL) --eval '(load (compile-file "objc-runtime.asd"))' \
+	$(CCL) --load ~/quicklisp/setup.lisp \
+		--eval '(load (compile-file "objc-runtime.asd"))' \
 		--eval '(ql:quickload :objc-runtime)' \
 		--eval '(load (compile-file "demo-app.lisp"))' \
 		--eval '(ccl:save-application "demo-app" :toplevel-function '"'"'demo-app::main :prepend-kernel t)'
 demo-app.iconset: demo-app.svg
 	rm -rf demo-app.iconset
 	mkdir demo-app.iconset
-	rsvg-convert -h 16  demo-app.svg >  demo-app.iconset/icon_16x16.png
-	rsvg-convert -h 32  demo-app.svg >  demo-app.iconset/icon_16x16@2x.png
-	rsvg-convert -h 32  demo-app.svg >  demo-app.iconset/icon_32x32.png
-	rsvg-convert -h 64  demo-app.svg >  demo-app.iconset/icon_32x32@2x.png
-	rsvg-convert -h 64  demo-app.svg >  demo-app.iconset/icon_64x64.png
-	rsvg-convert -h 128  demo-app.svg > demo-app.iconset/icon_64x64@2x.png
-	rsvg-convert -h 128  demo-app.svg > demo-app.iconset/icon_128x128.png
-	rsvg-convert -h 256  demo-app.svg > demo-app.iconset/icon_128x128@2x.png
-	rsvg-convert -h 256  demo-app.svg > demo-app.iconset/icon_256x256.png
-	rsvg-convert -h 512  demo-app.svg > demo-app.iconset/icon_256x256@2x.png
-	rsvg-convert -h 512  demo-app.svg > demo-app.iconset/icon_512x512.png
+	rsvg-convert -h 16  demo-app.svg >	demo-app.iconset/icon_16x16.png
+	rsvg-convert -h 32  demo-app.svg >	demo-app.iconset/icon_16x16@2x.png
+	rsvg-convert -h 32  demo-app.svg >	demo-app.iconset/icon_32x32.png
+	rsvg-convert -h 64  demo-app.svg >	demo-app.iconset/icon_32x32@2x.png
+	rsvg-convert -h 64  demo-app.svg >	demo-app.iconset/icon_64x64.png
+	rsvg-convert -h 128	demo-app.svg > demo-app.iconset/icon_64x64@2x.png
+	rsvg-convert -h 128	demo-app.svg > demo-app.iconset/icon_128x128.png
+	rsvg-convert -h 256	demo-app.svg > demo-app.iconset/icon_128x128@2x.png
+	rsvg-convert -h 256	demo-app.svg > demo-app.iconset/icon_256x256.png
+	rsvg-convert -h 512	demo-app.svg > demo-app.iconset/icon_256x256@2x.png
+	rsvg-convert -h 512	demo-app.svg > demo-app.iconset/icon_512x512.png
 mkapp: dylib demo-app demo-app.iconset
 	rm -rf demo.app
 	cp -R demo.app.template demo.app
+	mkdir demo.app/Contents/{Resources,MacOS}
 	iconutil -c icns demo-app.iconset -o demo.app/Contents/Resources/demo-app.icns
 	cp demo-app demo.app/Contents/MacOS
 
 run: dylib
-	$(CCL) --eval '(load (compile-file "objc-runtime.asd"))' \
+	$(CCL) --load ~/quicklisp/setup.lisp
+			--eval '(load (compile-file "objc-runtime.asd"))' \
 			--eval '(ql:quickload :objc-runtime)' \
 			--eval '(load (compile-file "demo-app.lisp"))' \
 			--eval '(demo-app::main)'
