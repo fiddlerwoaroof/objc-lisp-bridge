@@ -129,7 +129,7 @@
                                     :pointer bundle]))
       (cffi:with-foreign-object (p :pointer)
         [nib @(instantiateWithOwner:topLevelObjects:)
-            :pointer objc-runtime::ns-app
-            :pointer p]))
+             :pointer objc-runtime::ns-app
+             :pointer p]))
     [objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
     [objc-runtime::ns-app @(run) ]))
