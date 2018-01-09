@@ -27,3 +27,4 @@ demo.app
 *.png
 *.icns
 NSRect-Expose
+*.nib
