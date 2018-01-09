@@ -21,9 +21,9 @@ lisp's ffi types.
    somewhere quicklisp can find it (e.g. ~/quicklisp/local-projects)
 
 2. Install rsvg-convert:
-#+BEGIN_SRC sh
+    #+BEGIN_SRC sh
 brew install librsvg
-#+END_SRC
+    #+END_SRC
    
 3. build + run the demo:
    #+BEGIN_SRC sh
