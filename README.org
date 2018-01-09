@@ -24,3 +24,31 @@ lisp's ffi types.
 make mkapp CCL=/path/to/ccl
 open demo.app
    #+END_SRC
+
+* Show me the code!
+  
+From demo-app.lisp:
+
+#+BEGIN_SRC lisp
+  (defun main ()
+    (trivial-main-thread:with-body-in-main-thread (:blocking t)
+      [#@NSAutoReleasePool @(new)]
+      [#@NSApplication @(sharedApplication)]
+      [objc-runtime::ns-app @(setActivationPolicy:) :int 0]
+
+      (let ((app-delegate (objc-runtime::objc-allocate-class-pair
+                           #@NSObject "AppDelegate" 0)))
+        (objc-runtime::add-pointer-ivar app-delegate "window")
+        (objc-runtime::add-pointer-ivar app-delegate "delegate"))
+
+      (let* ((bundle [#@NSBundle @(mainBundle)])
+             (nib [[#@NSNib @(alloc)] @(initWithNibNamed:bundle:)
+                                      :pointer @"MainMenu"
+                                      :pointer bundle]))
+        (cffi:with-foreign-object (p :pointer)
+          [nib @(instantiateWithOwner:topLevelObjects:)
+               :pointer objc-runtime::ns-app
+               :pointer p]))
+      [objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
+      [objc-runtime::ns-app @(run)]))
+#+END_SRC

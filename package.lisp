@@ -21,4 +21,5 @@
    #:ns-point-y
    #:ns-point
    #:ns-size
-   #:ns-rect))
+   #:ns-rect
+   #:get-method-names))
