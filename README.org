@@ -19,7 +19,13 @@ lisp's ffi types.
 1. clone fwoar.lisputils from
    https://github.com/fiddlerwoaroof/fwoar.lisputils and put it
    somewhere quicklisp can find it (e.g. ~/quicklisp/local-projects)
-2. build + run the demo:
+
+2. Install rsvg-convert:
+#+BEGIN_SRC sh
+brew install librsvg
+#+END_SRC
+   
+3. build + run the demo:
    #+BEGIN_SRC sh
 make mkapp CCL=/path/to/ccl
 open demo.app

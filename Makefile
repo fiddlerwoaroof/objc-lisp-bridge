@@ -1,6 +1,6 @@
 CCL=ccl
 
-dylib: nsrect-expose.m libnsrect-expose.dylib
+dylib: nsrect-expose.m
 	clang -shared \
 			-framework Cocoa \
 			nsrect-expose.m \
@@ -32,10 +32,3 @@ mkapp: dylib demo-app demo-app.iconset
 	iconutil -c icns demo-app.iconset -o demo.app/Contents/Resources/demo-app.icns
 	ibtool --compile demo.app/Contents/Resources/MainMenu.nib MainMenu.xib
 	cp demo-app demo.app/Contents/MacOS
-
-run: dylib
-	$(CCL) --load ~/quicklisp/setup.lisp \
-			--eval '(load (compile-file "objc-runtime.asd"))' \
-			--eval '(ql:quickload :objc-runtime)' \
-			--eval '(load (compile-file "demo-app.lisp"))' \
-			--eval '(demo-app::main)'

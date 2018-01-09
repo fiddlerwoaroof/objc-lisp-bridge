@@ -108,7 +108,7 @@
                      alloc init)
       (objc-runtime::class-add-method my-class do-magic (cffi:callback button-action)
                                       "v@:@")
-      (fw.lu:prog1-bind (result [[my-class alloc] init])
+      (let ((result [[my-class alloc] init]))
         [button set-target :pointer result]
         [button set-action :pointer do-magic]))))
 
