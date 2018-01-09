@@ -1,6 +1,7 @@
 (defpackage :demo-app
   (:use :cl :objc-runtime)
-  (:export ))
+  (:export
+   #:get-method-names))
 (in-package :demo-app)
 (named-readtables:in-readtable :objc-readtable)
 
@@ -145,7 +146,24 @@
             [#@NSApplication shared-application]
             [objc-runtime::ns-app set-activation-policy :int 0]
 
+            (let ((app-delegate (objc-runtime::objc-allocate-class-pair #@NSObject
+                                                                        "AppDelegate"
+                                                                        0)))
+              (objc-runtime::add-pointer-ivar app-delegate "window")
+              (objc-runtime::add-pointer-ivar app-delegate "delegate"))
+
+            (let* ((bundle [#@NSBundle @(mainBundle)])
+                   (nib [[#@NSNib @(alloc)] @(initWithNibNamed:bundle:)
+                        :pointer @"MainMenu"
+                        :pointer bundle]))
+              (cffi:with-foreign-object (p :pointer)
+                [nib @(instantiateWithOwner:topLevelObjects:)
+                :pointer objc-runtime::ns-app
+                :pointer p]))
+            [ objc-runtime::ns-app activate-ignoring-other-apps :boolean t]
+            [ objc-runtime::ns-app run]
             ;; (break)
+            #+null
             (let* ((application-name [[#@NSProcessInfo process-info] process-name]))
               (let* ((menubar [[#@NSMenu new] autorelease])
                      (app-menu-item [[#@NSMenuItem new] autorelease])

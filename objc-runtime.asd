@@ -11,6 +11,7 @@
                #:fwoar.lisputils
                #:cffi
                #:trivial-main-thread
+               #:trivial-features
                #:cffi-libffi)
   :defsystem-depends-on (#:cffi-grovel)
   :components ((:file "package")

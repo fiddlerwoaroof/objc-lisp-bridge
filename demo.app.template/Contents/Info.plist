@@ -7,6 +7,6 @@
     <key>CFBundleIdentifier</key>
     <string>com.fwoar.demo-app</string>
     <key>CFBundleIconFile</key>
-    <string>AppIcon</string>
+    <string>demo-app</string>
   </dict>
 </plist>

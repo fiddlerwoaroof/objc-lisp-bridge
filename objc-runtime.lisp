@@ -31,6 +31,10 @@
   (name :string)
   (extra-bytes :int))
 
+(defcfun (objc-register-class-pair "objc_registerClassPair" :library foundation)
+    :void
+  (superclass :pointer))
+
 (defcfun (objc-get-protocol "objc_getProtocol" :library foundation)
     :pointer
   (name :string))
@@ -39,6 +43,26 @@
     :boolean
   (class :pointer)
   (protocol :pointer))
+
+(serapeum:eval-always
+  (defctype sizet
+      :ulong
+      #+32-bit-target :uint))
+
+(defcfun (class-add-ivar "class_addIvar" :library foundation)
+    :boolean
+  (class :pointer)
+  (name :string)
+  (size :ulong)
+  (alignment :uint8)
+  (types :string))
+
+(defun add-pointer-ivar (class name)
+  (class-add-ivar class name
+                  (foreign-type-size :pointer)
+                  (floor (log (foreign-type-size :pointer)
+                              2))
+                  "@"))
 
 (defcfun (objc-class-get-name "class_getName" :library foundation)
     :string
@@ -97,6 +121,17 @@
     :pointer
   (object :pointer)
   (ivar :pointer))
+
+(defcfun (class-get-instance-variable "class_getInstanceVariable" :library foundation)
+    :pointer
+  (class :pointer)
+  (name :string))
+
+(defcfun (object-get-instance-variable "object_getInstanceVariable" :library foundation)
+    :pointer
+  (object :pointer)
+  (name :string)
+  (out :pointer))
 
 (defcfun (class-get-property "class_getProperty" :library foundation)
     :pointer
