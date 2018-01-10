@@ -42,19 +42,22 @@ From demo-app.lisp:
       [#@NSApplication @(sharedApplication)]
       [objc-runtime::ns-app @(setActivationPolicy:) :int 0]
 
-      (let ((app-delegate (objc-runtime::objc-allocate-class-pair
-                           #@NSObject "AppDelegate" 0)))
-        (objc-runtime::add-pointer-ivar app-delegate "window")
-        (objc-runtime::add-pointer-ivar app-delegate "delegate"))
+      (objc-runtime::objc-register-class-pair
+       (demo-app::make-app-delegate-class '("actionButton"
+                                  "alertButton"
+                                  "profitButton")))
 
-      (let* ((bundle [#@NSBundle @(mainBundle)])
-             (nib [[#@NSNib @(alloc)] @(initWithNibNamed:bundle:)
-                                      :pointer @"MainMenu"
-                                      :pointer bundle]))
-        (cffi:with-foreign-object (p :pointer)
-          [nib @(instantiateWithOwner:topLevelObjects:)
-               :pointer objc-runtime::ns-app
-               :pointer p]))
+      (demo-app::load-nib "MainMenu")
+      
+      (let ((app-delegate [objc-runtime::ns-app @(delegate)]))
+        (demo-app::make-button-delegate (value-for-key app-delegate "actionButton")
+                              (cffi:callback do-things-action))
+        (demo-app::make-button-delegate (value-for-key app-delegate "alertButton")
+                              (cffi:callback alert-action))
+        (demo-app::make-button-delegate (value-for-key app-delegate "profitButton")
+                              (cffi:callback profit-action)))
+      
       [objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
       [objc-runtime::ns-app @(run)]))
+
 #+END_SRC
