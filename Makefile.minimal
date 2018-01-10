@@ -1,0 +1,19 @@
+CCL=ccl
+
+dylib: nsrect-expose.m
+	clang -shared \
+			-framework Cocoa \
+			nsrect-expose.m \
+			-o libnsrect-expose.dylib
+demo-app: dylib
+	$(CCL) --load ~/quicklisp/setup.lisp \
+		--eval '(load (compile-file "objc-runtime.asd"))' \
+		--eval '(ql:quickload :objc-runtime)' \
+		--eval '(load (compile-file "demo-app.lisp"))' \
+		--eval '(ccl:save-application "demo-app" :toplevel-function '"'"'demo-app::main :prepend-kernel t)'
+mkapp: dylib demo-app
+	rm -rf demo.app
+	cp -R demo.app.template demo.app
+	mkdir -p demo.app/Contents/{Resources,MacOS}
+	ibtool --compile demo.app/Contents/Resources/MainMenu.nib MainMenu.xib
+	cp demo-app demo.app/Contents/MacOS
