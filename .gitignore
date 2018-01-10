@@ -28,3 +28,4 @@ demo.app
 *.icns
 NSRect-Expose
 *.nib
+.*.sw?

@@ -90,46 +90,88 @@
                               ,(coerce h 'double-float)))
                            '(:struct objc-runtime:ns-rect)))
 
-(defun show-alert (message)
+(defun show-alert (message &optional (informative-text "Informative Text!"))
   (let ((alert [[#@NSAlert @(alloc)] @(init)]))
-    [alert @(setMessageText:) :pointer @"message"]
-    [alert @(setInformativeText:) :pointer @"Informative text."]
+    [alert @(setMessageText:) :pointer (objc-runtime::make-nsstring message)]
+    [alert @(setInformativeText:) :pointer (objc-runtime::make-nsstring informative-text)]
     [alert @(addButtonWithTitle:) :pointer @"OK"]
     [alert @(addButtonWithTitle:) :pointer @"Cancel"]
     [alert @(runModal)]))
 
-(cffi:defcallback button-action :void ((a :pointer) (b :pointer) (sender :pointer))
+(cffi:defcallback do-things-action :void ((a :pointer) (b :pointer) (sender :pointer))
+  (declare (ignore a b sender))
+  (show-alert "Starting Swank"
+              "Loading Quicklisp from ~/quicklisp/setup.lisp + starting swank")
+
+  (load "~/quicklisp/setup.lisp")
+  (funcall (intern "QUICKLOAD" (find-package :QL)) :swank)
+  (funcall (intern "CREATE-SERVER" (find-package :swank)) :port 5060 :dont-close t)
+  
+  (show-alert "Started swank on 5060"))
+
+(cffi:defcallback alert-action :void ((a :pointer) (b :pointer) (sender :pointer))
   (declare (ignore a b sender))
   (show-alert "Hello There!"))
 
-(defun make-button-delegate (button)
+(cffi:defcallback profit-action :void ((a :pointer) (b :pointer) (sender :pointer))
+  (declare (ignore a b sender))
+  (show-alert "That Was Profitable!"))
+
+(defun make-button-delegate (button cb)
   (let ((my-class (objc-runtime::objc-allocate-class-pair #@NSObject "ButtonDel" 0)))
     (with-selectors ((do-magic "doMagic:") (set-target "setTarget:") (set-action "setAction:")
                      alloc init)
-      (objc-runtime::class-add-method my-class do-magic (cffi:callback button-action)
-                                      "v@:@")
+      (objc-runtime::class-add-method my-class do-magic cb "v@:@")
       (fw.lu:prog1-bind (result [[my-class alloc] init])
         [button set-target :pointer result]
         [button set-action :pointer do-magic]))))
 
+(defun make-app-delegate-class (outlets)
+  (let ((app-delegate-class (objc-runtime::objc-allocate-class-pair
+                             #@NSObject "AppDelegate" 0)))
+    (objc-runtime::add-pointer-ivar app-delegate-class "window")
+    (objc-runtime::add-pointer-ivar app-delegate-class "delegate")
+
+    (loop for outlet in outlets do
+         (objc-runtime::add-pointer-ivar app-delegate-class outlet))
+
+    app-delegate-class))
+
+(defun load-nib (name)
+  ;; find and activate the nib
+  (let* ((bundle [#@NSBundle @(mainBundle)])
+         (nib [[#@NSNib @(alloc)] @(initWithNibNamed:bundle:)
+                                  :pointer (objc-runtime::make-nsstring name)
+                                  :pointer bundle]))
+    (cffi:with-foreign-object (p :pointer)
+      ;; TODO: is dropping p a problem here? The docs say something relevant.
+      ;;       must investigate.
+      [nib @(instantiateWithOwner:topLevelObjects:)
+           :pointer objc-runtime::ns-app
+           :pointer p])))
+
 (defun main ()
   (trivial-main-thread:with-body-in-main-thread (:blocking t)
-    [#@NSAutoReleasePool @(new) ]
-    [#@NSApplication @(sharedApplication) ]
+    [#@NSAutoReleasePool @(new)]
+    [#@NSApplication @(sharedApplication)]
     [objc-runtime::ns-app @(setActivationPolicy:) :int 0]
 
-    (let ((app-delegate (objc-runtime::objc-allocate-class-pair
-                         #@NSObject "AppDelegate" 0)))
-      (objc-runtime::add-pointer-ivar app-delegate "window")
-      (objc-runtime::add-pointer-ivar app-delegate "delegate"))
+    ;; Setup the app delegate class. We register this one because it's useful
+    ;; When debugging via something like lldb
+    (objc-runtime::objc-register-class-pair
+     (make-app-delegate-class '("actionButton"
+                                "alertButton"
+                                "profitButton")))
 
-    (let* ((bundle [#@NSBundle @(mainBundle)])
-           (nib [[#@NSNib @(alloc)] @(initWithNibNamed:bundle:)
-                                    :pointer @"MainMenu"
-                                    :pointer bundle]))
-      (cffi:with-foreign-object (p :pointer)
-        [nib @(instantiateWithOwner:topLevelObjects:)
-             :pointer objc-runtime::ns-app
-             :pointer p]))
+    (load-nib "MainMenu")
+    
+    (let ((app-delegate [objc-runtime::ns-app @(delegate)]))
+      (make-button-delegate (value-for-key app-delegate "actionButton")
+                            (cffi:callback do-things-action))
+      (make-button-delegate (value-for-key app-delegate "alertButton")
+                            (cffi:callback alert-action))
+      (make-button-delegate (value-for-key app-delegate "profitButton")
+                            (cffi:callback profit-action)))
+    
     [objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
-    [objc-runtime::ns-app @(run) ]))
+    [objc-runtime::ns-app @(run)]))

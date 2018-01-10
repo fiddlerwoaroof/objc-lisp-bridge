@@ -11,9 +11,12 @@
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
-        <customObject id="-3" userLabel="Application"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate">
             <connections>
+                <outlet property="actionButton" destination="tsC-6t-n8w" id="1do-fU-4Vq"/>
+                <outlet property="alertButton" destination="B58-6z-vcj" id="sNy-nL-OXG"/>
+                <outlet property="profitButton" destination="kpz-zw-hNc" id="eR3-2l-bVP"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -685,6 +688,7 @@
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="335" y="390" width="130" height="127"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1050"/>
+            <value key="minSize" type="size" width="130" height="127"/>
             <view key="contentView" wantsLayer="YES" id="EiT-Mj-1SZ">
                 <rect key="frame" x="0.0" y="0.0" width="130" height="127"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -698,6 +702,9 @@
                     </button>
                     <button identifier="QButton" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="B58-6z-vcj">
                         <rect key="frame" x="14" y="46" width="102" height="32"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="21" id="4bY-Mh-ivB"/>
+                        </constraints>
                         <buttonCell key="cell" type="push" title="???" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="fM6-sP-hqC">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -712,21 +719,21 @@
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="kpz-zw-hNc" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" constant="20" id="FUw-ts-Dvv"/>
-                    <constraint firstItem="kpz-zw-hNc" firstAttribute="top" secondItem="B58-6z-vcj" secondAttribute="bottom" constant="12" id="Mo0-Fq-Ekv"/>
-                    <constraint firstAttribute="trailing" secondItem="B58-6z-vcj" secondAttribute="trailing" constant="20" id="PrU-3Q-xbT"/>
-                    <constraint firstItem="B58-6z-vcj" firstAttribute="top" secondItem="tsC-6t-n8w" secondAttribute="bottom" constant="12" id="R99-fb-R0a"/>
-                    <constraint firstAttribute="trailing" secondItem="kpz-zw-hNc" secondAttribute="trailing" constant="20" id="cXz-s9-bm0"/>
-                    <constraint firstItem="tsC-6t-n8w" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" constant="20" id="fgb-wQ-bYz"/>
-                    <constraint firstItem="tsC-6t-n8w" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" constant="20" id="gkO-dz-KSN"/>
-                    <constraint firstAttribute="trailing" secondItem="tsC-6t-n8w" secondAttribute="trailing" constant="20" id="kvv-3f-CPP"/>
-                    <constraint firstItem="B58-6z-vcj" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" constant="20" id="pxX-yN-nxG"/>
-                    <constraint firstItem="B58-6z-vcj" firstAttribute="width" secondItem="tsC-6t-n8w" secondAttribute="width" id="raD-LI-R65"/>
-                    <constraint firstItem="kpz-zw-hNc" firstAttribute="width" secondItem="B58-6z-vcj" secondAttribute="width" id="sko-eC-fdc"/>
-                    <constraint firstAttribute="bottom" secondItem="kpz-zw-hNc" secondAttribute="bottom" constant="20" id="zFb-Pu-3aJ"/>
+                    <constraint firstItem="kpz-zw-hNc" firstAttribute="leading" secondItem="B58-6z-vcj" secondAttribute="leading" id="5b9-mG-fdb"/>
+                    <constraint firstAttribute="trailing" secondItem="tsC-6t-n8w" secondAttribute="trailing" constant="20" id="698-FB-H88"/>
+                    <constraint firstItem="tsC-6t-n8w" firstAttribute="top" secondItem="EiT-Mj-1SZ" secondAttribute="top" constant="20" id="AU4-Qz-TKg"/>
+                    <constraint firstItem="B58-6z-vcj" firstAttribute="leading" secondItem="tsC-6t-n8w" secondAttribute="leading" id="FPZ-ws-33F"/>
+                    <constraint firstItem="B58-6z-vcj" firstAttribute="top" secondItem="tsC-6t-n8w" secondAttribute="bottom" constant="12" id="MRa-zq-5sy"/>
+                    <constraint firstItem="kpz-zw-hNc" firstAttribute="width" secondItem="B58-6z-vcj" secondAttribute="width" id="Nvf-uM-pjC"/>
+                    <constraint firstAttribute="bottom" secondItem="tsC-6t-n8w" secondAttribute="bottom" constant="86" id="OOB-Ll-lhm"/>
+                    <constraint firstItem="B58-6z-vcj" firstAttribute="width" secondItem="tsC-6t-n8w" secondAttribute="width" id="S8Y-hC-OzM"/>
+                    <constraint firstItem="kpz-zw-hNc" firstAttribute="top" secondItem="B58-6z-vcj" secondAttribute="bottom" constant="12" id="SpV-Go-sxH"/>
+                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="kpz-zw-hNc" secondAttribute="trailing" constant="20" symbolic="YES" id="bgf-3t-GzH"/>
+                    <constraint firstItem="tsC-6t-n8w" firstAttribute="leading" secondItem="EiT-Mj-1SZ" secondAttribute="leading" constant="20" id="xdm-k8-1Yj"/>
+                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="B58-6z-vcj" secondAttribute="trailing" constant="20" symbolic="YES" id="ygs-9c-Ai1"/>
                 </constraints>
             </view>
-            <point key="canvasLocation" x="-36" y="44.5"/>
+            <point key="canvasLocation" x="-36" y="48.5"/>
         </window>
     </objects>
 </document>
