@@ -151,6 +151,9 @@
            :pointer p])))
 
 (defun main ()
+  #+sbcl
+  (sb-int:set-floating-point-modes :traps '())
+
   (trivial-main-thread:with-body-in-main-thread (:blocking t)
     [#@NSAutoReleasePool @(new)]
     [#@NSApplication @(sharedApplication)]
