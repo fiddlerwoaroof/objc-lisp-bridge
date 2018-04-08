@@ -166,7 +166,7 @@
                                 "alertButton"
                                 "profitButton")))
 
-    (load-nib "MainMenu")
+    (load-nib "MainMenu.nib")
     
     (let ((app-delegate [objc-runtime::ns-app @(delegate)]))
       (make-button-delegate (value-for-key app-delegate "actionButton")

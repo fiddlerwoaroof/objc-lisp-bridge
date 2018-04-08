@@ -22,4 +22,5 @@
    #:ns-point
    #:ns-size
    #:ns-rect
-   #:get-method-names))
+   #:get-method-names
+   #:ensure-wrapped-objc-class))

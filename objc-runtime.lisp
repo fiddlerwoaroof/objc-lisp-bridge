@@ -122,11 +122,6 @@
   (object :pointer)
   (ivar :pointer))
 
-(defcfun (class-get-instance-variable "class_getInstanceVariable" :library foundation)
-    :pointer
-  (class :pointer)
-  (name :string))
-
 (defcfun (object-get-instance-variable "object_getInstanceVariable" :library foundation)
     :pointer
   (object :pointer)
@@ -170,6 +165,7 @@
             (push (mem-aref methods :pointer n)
                   result)))))))
 
+
 (defun make-nsstring (str)
   [[#@NSString @(alloc)] @(initWithCString:encoding:) :string str :uint 1])
 
@@ -200,24 +196,96 @@
                              *selector-cache*
                              (sel-register-name name)))
 
-(defmacro with-selectors ((&rest selector-specs) &body body)
-  `(let (,@(mapcar (fw.lu:destructuring-lambda ((sym foreign-selector))
-                     `(,sym (ensure-selector ,foreign-selector)))
-                   (mapcar (fw.lu:glambda (spec)
-                             (:method ((spec symbol))
-                               (list spec (normalize-selector-name
-                                           (string-downcase spec))))
-                             (:method ((spec cons))
-                               (list (car spec) (cadr spec))))
-                           selector-specs)))
-     ,@body))
-
 (defmacro with-objc-classes ((&rest class-defs) &body body)
   `(let (,@(mapcar (fw.lu:destructuring-lambda ((lisp-name foreign-name))
                      `(,lisp-name (objc-look-up-class ,foreign-name)))
                    class-defs))
      ,@body))
 
+
+
+(cffi:defcvar (ns-app "NSApp" :library appkit) :pointer)
+
+(defclass objc-class ()
+  ((%objc-class-name :initarg :name :reader name)
+   (%class-pointer :initarg :pointer :reader class-pointer)
+   (%cache :initform (make-hash-table :test 'equal) :allocation :class :reader objc-class-cache)))
+
+(defclass objc-selector ()
+  ((%objc-selector-name :initarg :name :reader name)
+   (%selector-pointer :initarg :pointer :reader selector-pointer)
+   (%args :initarg :args :reader args)
+   (%result-type :initarg :result-type :reader result-type)
+   (%cache :initform (make-hash-table :test 'equal) :allocation :class :reader objc-selector-cache))
+  (:metaclass closer-mop:funcallable-standard-class))
+
+(defun make-message-lambda-form (args rettype)
+  (alexandria:with-gensyms ((target :target))
+    (fw.lu:with (arg-syms (mapcar (serapeum:op _ (gensym "arg")) args))
+      `(lambda (selector)
+         (lambda (,target ,@arg-syms)
+           (cffi:foreign-funcall
+            "objc_msgSend"
+            :pointer ,target
+            :pointer selector
+            ,@(mapcan #'list args arg-syms)
+            ,rettype))))))
+
+(defmethod initialize-instance :after ((sel objc-selector) &key &allow-other-keys)
+  (with-accessors ((pointer selector-pointer)
+                   (args args)
+                   (rettype result-type))
+      sel
+    (closer-mop:set-funcallable-instance-function
+     sel
+     (funcall (compile nil (make-message-lambda-form args rettype))
+              pointer))))
+
+(defgeneric reset-class-cache (class)
+  (:method ((class symbol))
+    (reset-class-cache (find-class class)))
+  (:method ((class class))
+    (setf (slot-value (closer-mop:class-prototype class) '%cache)
+          (make-hash-table :test 'equal))))
+
+
+(define-condition no-such-objc-class (serious-condition)
+  ((%wanted-name :initarg :wanted-name :reader wanted-name))
+  (:report (lambda (c s)
+             (format s "No such Objective-C class: ~a" (wanted-name c)))))
+
+(defun %ensure-wrapped-objc-class (name)
+  (let* ((class-cache (objc-class-cache (closer-mop:class-prototype (find-class 'objc-class))))
+         (cached (gethash name class-cache)))
+    (if cached
+        cached 
+        (let ((objc-class (objc-look-up-class name)))
+          (if (null-pointer-p objc-class)
+              (error 'no-such-objc-class :wanted-name name)
+              (setf (gethash name class-cache)
+                    (make-instance 'objc-class
+                                   :name name
+                                   :pointer objc-class)))))))
+
+;; TODO: should this error if there is no corresponding selector? Or should we let that fall through to message sending?
+(defun %ensure-wrapped-objc-selector (name target-class result-type args)
+  (assert (= (count #\: name)
+             (length args))
+          (name args)
+          "Invalid number of arg types for selector ~s" name)
+
+  (let* ((class-cache (objc-selector-cache (closer-mop:class-prototype (find-class 'objc-selector))))
+         (cached (gethash (list name target-class)
+                          class-cache)))
+    (if cached
+        cached 
+        (let ((objc-selector (ensure-selector name)))
+          (setf (gethash (list name target-class) class-cache)
+                (make-instance 'objc-selector
+                               :name name
+                               :pointer objc-selector
+                               :result-type result-type
+                               :args args))))))
 
 (defgeneric make-objc-instance (class &rest args)
   (:method ((class string) &rest args)
@@ -233,18 +301,36 @@
     (with-selectors (alloc init)
       [[class alloc] init])))
 
+(defun ensure-wrapped-objc-class (name)
+  (tagbody
+   retry (restart-case (return-from ensure-wrapped-objc-class
+                         (%ensure-wrapped-objc-class name))
+           (use-value (new)
+             :interactive (lambda ()
+                            (format t "New Objective-C class name: ")
+                            (multiple-value-list (read)))
+             :report "Retry with new class name"
+             (setf name new)
+             (go retry)))))
 
-(cffi:defcvar (ns-app "NSApp" :library appkit) :pointer)
+(defmacro with-selectors ((&rest selector-specs) &body body)
+  `(let (,@(mapcar (fw.lu:destructuring-lambda ((sym foreign-selector))
+                     `(,sym (ensure-selector ,foreign-selector)))
+                   (mapcar (fw.lu:glambda (spec)
+                             (:method ((spec symbol))
+                               (list spec (normalize-selector-name
+                                           (string-downcase spec))))
+                             (:method ((spec cons))
+                               (list (car spec) (cadr spec))))
+                           selector-specs)))
+     ,@body))
 
-#|
-(uiop:nest (with-selectors (alloc init drain))
-           (with-objc-classes ((nsobject "NSAutoreleasepool")))
-           (eval-objc (objc-msg-send
-                       (objc-msg-send
-                        (objc-msg-send nsobject alloc)
-                        init)
-                       drain)))
-(with-selectors (alloc init))
 
-|#
-
+(defmacro with-typed-selectors ((&rest defs) &body body)
+  (let ((expanded-defs (loop for ((name objc-name) args ret-type) in defs
+                          collect
+                            `((,name (&rest r) (apply ,name r))
+                              (,name (%ensure-wrapped-objc-selector ,objc-name ',ret-type ',args))))))
+    `(let (,@(mapcar #'second expanded-defs))
+       (flet (,@(mapcar #'first expanded-defs))
+         ,@body))))

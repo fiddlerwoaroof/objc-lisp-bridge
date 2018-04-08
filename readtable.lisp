@@ -1,5 +1,10 @@
 (in-package :objc-runtime)
 
+#+ccl
+(defgeneric send-message (object message &rest args)
+  (:method ((object ccl:macptr) (message (eql 'alloc)) &rest args)
+    (apply #'objc-msg-send object (ensure-selector "alloc") args)))
+
 (defun read-until (test symbol-prefix &optional stop-before-chars)
   "Read from a string until"
   (lambda (s c b)
