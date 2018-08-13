@@ -81,11 +81,26 @@
     o-selector
   (name :string))
 
+(defcfun (objc-msg-send-int "objc_msgSend")
+    :int
+  (cls o-class)
+  (sel o-selector)
+  &rest)
+
+(defcfun (objc-msg-send-string "objc_msgSend")
+    :string
+  (cls o-class)
+  (sel o-selector)
+  &rest)
+
 (defcfun (objc-msg-send "objc_msgSend")
     :pointer
   (cls o-class)
   (sel o-selector)
   &rest)
+
+(defun objc-msg-send-nsstring (thing selector &rest args)
+  [(apply 'objc-msg-send thing selector args) @(UTF8String)]s)
 
 (defcfun (class-copy-method-list "class_copyMethodList" :library foundation)
     :pointer
@@ -142,6 +157,15 @@
 (defcfun (property-get-attributes "property_getAttributes" :library foundation)
     :string
   (prop :pointer))
+
+(defun get-classes ()
+  (let ((num-classes (objc-get-class-list (null-pointer) 0)))
+    (with-foreign-object (classes :pointer num-classes)
+      (objc-get-class-list classes num-classes)
+      (let ((result (list)))
+        (dotimes (n num-classes (nreverse result))
+          (push (mem-aref classes :pointer n)
+                result))))))
 
 (defgeneric get-methods (class)
   (:method ((class string))
@@ -334,3 +358,4 @@
     `(let (,@(mapcar #'second expanded-defs))
        (flet (,@(mapcar #'first expanded-defs))
          ,@body))))
+

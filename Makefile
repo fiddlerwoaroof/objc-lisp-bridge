@@ -11,6 +11,8 @@ demo-app: dylib
 		--eval '(ql:quickload :objc-runtime)' \
 		--eval '(load (compile-file "demo-app.lisp"))' \
 		--eval '(ccl:save-application "demo-app" :toplevel-function '"'"'demo-app::main :prepend-kernel t)'
+		#--eval '(sb-ext:save-lisp-and-die "demo-app" :toplevel '"'"'demo-app::main :executable t)'
+
 demo-app.iconset: demo-app.svg
 	rm -rf demo-app.iconset
 	mkdir -p demo-app.iconset

@@ -23,4 +23,7 @@
    #:ns-size
    #:ns-rect
    #:get-method-names
-   #:ensure-wrapped-objc-class))
+   #:ensure-wrapped-objc-class
+   #:add-pointer-ivar
+   #:objc-msg-send-int
+   #:objc-msg-send-string))

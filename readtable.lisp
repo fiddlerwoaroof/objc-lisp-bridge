@@ -26,10 +26,16 @@
   (:syntax-from :standard #\) #\])
   (:macro-char #\[ (lambda (s char)
                      char
-                     (let ((info (read-delimited-list #\] s t)))
+                     (let ((info (read-delimited-list #\] s t))
+                           (msg-send (case (peek-char nil s nil #\p t)
+                                       (#\# (read-char s t nil t) 'objc-msg-send-int)
+                                       (#\s (read-char s t nil t) 'objc-msg-send-string)
+                                       (#\@ (read-char s t nil t) 'objc-msg-send-nsstring)
+                                       (#\& (read-char s t nil t) 'objc-msg-send)
+                                       (t 'objc-msg-send))))
                        (when info
                          (destructuring-bind (obj message . args) info
-                           `(objc-msg-send ,obj ,message ,@args)))))
+                           `(,msg-send ,obj ,message ,@args)))))
                nil)
   (:dispatch-macro-char #\# #\@
                         (lambda (s c b)
