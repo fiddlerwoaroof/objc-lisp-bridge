@@ -17,4 +17,5 @@
   :components ((:file "package")
                (:cffi-grovel-file "objc-runtime-types" :depends-on ("package"))
                (:file "readtable" :depends-on ("package"))
+               (:file "gcd" :depends-on ("objc-runtime"))
                (:file "objc-runtime" :depends-on ("package" "readtable" "objc-runtime-types"))))
