@@ -187,66 +187,39 @@
 
 (defparameter *application-shim* (make-instance 'application-shim))
 
-#+nil
+;#+nil
 (defun old-code ()
- (trivial-main-thread:with-body-in-main-thread (:blocking t)
-   (sb-int:with-float-traps-masked
-       (:underflow :overflow :inexact
-                   :invalid :divide-by-zero)
-     (with-selectors ((shared-application "sharedApplication")
-                      (process-info "processInfo")
-                      (process-name "processName")
-                      (set-activation-policy "setActivationPolicy:")
-                      ;; (init-with-content-rect "initWithContentRect:styleMask:backing:defer:")
-                      (set-title "setTitle:")
-                      (run "run")
-                      (activate-ignoring-other-apps "activateIgnoringOtherApps:")
-                      (make-key-and-order-front "makeKeyAndOrderFront:")
-                      (cascade-top-left-from-point "cascadeTopLeftFromPoint:")
-                      (add-item "addItem:")
-                      (set-main-menu "setMainMenu:")
-                      (init-with-title "initWithTitle:action:keyEquivalent:")
-                      (set-submenu "setSubmenu:")
-                      (init-with-encoding "initWithCString:length:")
-                      (content-view "contentView")
-                      (add-subview "addSubview:")
-                      (set-target "setTarget:")
-                      (set-action "setAction:")
-                      terminate?
-                      ;; (application-should-terminate "applicationShouldTerminate:")
-                      ;; (set-delegate "setDelegate:")
-                      ;; (finish-launching "finishLaunching")
-                      alloc new autorelease
-                      )
-       [#@NSAutoReleasePool new]
-       [#@NSApplication shared-application]
-       [objc-runtime::ns-app set-activation-policy :int 0]
+  #+null
+  (trivial-main-thread:with-body-in-main-thread (:blocking t)
+    (sb-int:with-float-traps-masked
+     (:underflow :overflow :inexact
+                 :invalid :divide-by-zero)))
+  [#@NSAutoReleasePool @(new)]
+  [#@NSApplication @(sharedApplication)]
+  [objc-runtime::ns-app @(setActivationPolicy) :int 0]
 
+  (let* ((application-name [[#@NSProcessInfo @(processInfo)] @(processName)]))
+    (let* ((menubar [[#@NSMenu @(new)] @(autorelease)])
+           (app-menu-item [[#@NSMenuItem @(new)] @(autorelease)])
+           (app-menu [[#@NSMenu @(new)] @(autorelease)])
+           (quit-name [[#@NSString @(alloc)] @(initWithEncoding) :string "Quit" :uint 4])
+           (key [[#@NSString @(alloc)] @(initWithCString:length:) :string "q" :uint 1])
+           (quit-menu-item
+            [[[#@NSMenuItem @(alloc)] @(initWithTitle:action:keyEquivalent:) :pointer quit-name :pointer @(terminate?) :string key] @(autorelease)]))
+      [menubar @(addItem:) :pointer app-menu-item]
+      [app-menu @(addItem:) :pointer quit-menu-item]
+      [app-menu-item @(setSubmenu:) :pointer app-menu]
+      [objc-runtime::ns-app @(setMainMenu:) :pointer menubar] )
 
-
-       ;; (break)
-       (let* ((application-name [[#@NSProcessInfo process-info] process-name]))
-         (let* ((menubar [[#@NSMenu new] autorelease])
-                (app-menu-item [[#@NSMenuItem new] autorelease])
-                (app-menu [[#@NSMenu new] autorelease])
-                (quit-name [[#@NSString alloc] init-with-encoding :string "Quit" :uint 4])
-                (key [[#@NSString alloc] init-with-encoding :string "q" :uint 1])
-                (quit-menu-item
-                 [[[#@NSMenuItem alloc] init-with-title :pointer quit-name :pointer terminate? :string key] autorelease]))
-           [menubar add-item :pointer app-menu-item]
-           [app-menu add-item :pointer quit-menu-item]
-           [app-menu-item set-submenu :pointer app-menu]
-           [objc-runtime::ns-app set-main-menu :pointer menubar] )
-
-         (setf (main-view *application-shim*)
-               [#@NSStackView @(stackViewWithViews:) :pointer [[#@NSArray @(alloc)] @(init)]])
-         (with-point (p (20 20))
-           (let* ((foreign-rect (make-rect 10 10 120 120))
-                  (the-window (init-window [#@NSWindow alloc] foreign-rect 1 2 nil)))
-             
-             [(value-for-key the-window "contentView") add-subview :pointer (main-view *application-shim*)]
-             [the-window cascade-top-left-from-point :pointer p]
-             [the-window set-title :pointer application-name]
-             [the-window make-key-and-order-front :pointer (cffi:null-pointer)]
-             [ objc-runtime::ns-app activate-ignoring-other-apps :boolean t]
-             [ objc-runtime::ns-app run])))))))
+    (setf (main-view *application-shim*)
+          [#@NSStackView @(stackViewWithViews:) :pointer [[#@NSArray @(alloc)] @(init)]])
+    (with-point (p (20 20))
+      (let* ((foreign-rect (make-rect 10 10 120 120))
+             (the-window (init-window [#@NSWindow @(alloc)] foreign-rect 1 2 nil)))
+        
+        [(value-for-key the-window "contentView") @(addSubview:) :pointer (main-view *application-shim*)]
+        [the-window @(cascadeTopLeftFromPoint:) :pointer p]
+        [the-window @(setTitle:) :pointer application-name]
+        [the-window @(makeKeyAndOrderFront:) :pointer (cffi:null-pointer)]
+        [ objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
+        [ objc-runtime::ns-app @(run)]))))
