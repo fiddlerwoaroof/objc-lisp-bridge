@@ -5,13 +5,10 @@ dylib: nsrect-expose.m
 			-framework Cocoa \
 			nsrect-expose.m \
 			-o libnsrect-expose.dylib
+
 demo-app: dylib
 	$(CCL) --load ~/quicklisp/setup.lisp \
-		--eval '(load (compile-file "objc-runtime.asd"))' \
-		--eval '(ql:quickload :objc-runtime)' \
-		--eval '(load (compile-file "demo-app.lisp"))' \
-		--eval '(ccl:save-application "demo-app" :toplevel-function '"'"'demo-app::main :prepend-kernel t)'
-		#--eval '(sb-ext:save-lisp-and-die "demo-app" :toplevel '"'"'demo-app::main :executable t)'
+           --load save.lisp
 
 demo-app.iconset: demo-app.svg
 	rm -rf demo-app.iconset
@@ -27,10 +24,11 @@ demo-app.iconset: demo-app.svg
 	rsvg-convert -h 256	demo-app.svg > demo-app.iconset/icon_256x256.png
 	rsvg-convert -h 512	demo-app.svg > demo-app.iconset/icon_256x256@2x.png
 	rsvg-convert -h 512	demo-app.svg > demo-app.iconset/icon_512x512.png
+
 mkapp: dylib demo-app demo-app.iconset
 	rm -rf demo.app
 	cp -R demo.app.template demo.app
 	mkdir -p demo.app/Contents/{Resources,MacOS}
 	iconutil -c icns demo-app.iconset -o demo.app/Contents/Resources/demo-app.icns
 	ibtool --compile demo.app/Contents/Resources/MainMenu.nib MainMenu.xib
-	cp demo-app demo.app/Contents/MacOS
+	cp demo-app libnsrect-expose.dylib demo.app/Contents/MacOS
