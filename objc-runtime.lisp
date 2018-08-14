@@ -122,11 +122,6 @@
   (object :pointer)
   (ivar :pointer))
 
-(defcfun (class-get-instance-variable "class_getInstanceVariable" :library foundation)
-    :pointer
-  (class :pointer)
-  (name :string))
-
 (defcfun (object-get-instance-variable "object_getInstanceVariable" :library foundation)
     :pointer
   (object :pointer)
