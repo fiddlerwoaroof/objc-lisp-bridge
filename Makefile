@@ -8,7 +8,7 @@ dylib: nsrect-expose.m
 
 demo-app: dylib
 	$(CCL) --load ~/quicklisp/setup.lisp \
-           --load save.lisp
+		   --load save.lisp
 
 demo-app.iconset: demo-app.svg
 	rm -rf demo-app.iconset

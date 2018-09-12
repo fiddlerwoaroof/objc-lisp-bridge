@@ -30,3 +30,4 @@ NSRect-Expose
 *.nib
 .*.sw?
 venv
+/reading-list2org

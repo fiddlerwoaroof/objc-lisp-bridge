@@ -153,13 +153,14 @@
            :pointer p])))
 
 ;#+null
-(defun main ()
+(defun old-code ()
   #+sbcl
   (sb-int:set-floating-point-modes :traps '())
 
   (trivial-main-thread:with-body-in-main-thread (:blocking t)
     [#@NSAutoReleasePool @(new)]
     [#@NSApplication @(sharedApplication)]
+    #+nil
     [objc-runtime::ns-app @(setActivationPolicy:) :int 0]
 
     ;; Setup the app delegate class. We register this one because it's useful
@@ -187,39 +188,47 @@
 
 (defparameter *application-shim* (make-instance 'application-shim))
 
-;#+nil
-(defun old-code ()
-  #+null
+                                        ;#+nil
+(defun main ()
+  (load "~/quicklisp/setup.lisp")
+  (funcall (intern "QUICKLOAD" (find-package :QL)) :swank)
+  (funcall (intern "CREATE-SERVER" (find-package :swank)) :port 5060 :dont-close t)
+
   (trivial-main-thread:with-body-in-main-thread (:blocking t)
-    (sb-int:with-float-traps-masked
-     (:underflow :overflow :inexact
-                 :invalid :divide-by-zero)))
-  [#@NSAutoReleasePool @(new)]
-  [#@NSApplication @(sharedApplication)]
-  [objc-runtime::ns-app @(setActivationPolicy) :int 0]
+    #+sbcl
+    (sb-int:set-floating-point-modes :traps '())
 
-  (let* ((application-name [[#@NSProcessInfo @(processInfo)] @(processName)]))
-    (let* ((menubar [[#@NSMenu @(new)] @(autorelease)])
-           (app-menu-item [[#@NSMenuItem @(new)] @(autorelease)])
-           (app-menu [[#@NSMenu @(new)] @(autorelease)])
-           (quit-name [[#@NSString @(alloc)] @(initWithEncoding) :string "Quit" :uint 4])
-           (key [[#@NSString @(alloc)] @(initWithCString:length:) :string "q" :uint 1])
-           (quit-menu-item
-            [[[#@NSMenuItem @(alloc)] @(initWithTitle:action:keyEquivalent:) :pointer quit-name :pointer @(terminate?) :string key] @(autorelease)]))
-      [menubar @(addItem:) :pointer app-menu-item]
-      [app-menu @(addItem:) :pointer quit-menu-item]
-      [app-menu-item @(setSubmenu:) :pointer app-menu]
-      [objc-runtime::ns-app @(setMainMenu:) :pointer menubar] )
+    [#@NSAutoReleasePool @(new)]
+    [#@NSApplication @(sharedApplication)]
 
-    (setf (main-view *application-shim*)
-          [#@NSStackView @(stackViewWithViews:) :pointer [[#@NSArray @(alloc)] @(init)]])
-    (with-point (p (20 20))
-      (let* ((foreign-rect (make-rect 10 10 120 120))
-             (the-window (init-window [#@NSWindow @(alloc)] foreign-rect 1 2 nil)))
-        
-        [(value-for-key the-window "contentView") @(addSubview:) :pointer (main-view *application-shim*)]
-        [the-window @(cascadeTopLeftFromPoint:) :pointer p]
-        [the-window @(setTitle:) :pointer application-name]
-        [the-window @(makeKeyAndOrderFront:) :pointer (cffi:null-pointer)]
-        [ objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
-        [ objc-runtime::ns-app @(run)]))))
+    (format t "~&app: ~s~%" objc-runtime::ns-app)
+    #+nil
+    [objc-runtime::ns-app @(setActivationPolicy) :int 0]
+
+    (let* ((application-name [[#@NSProcessInfo @(processInfo)] @(processName)]))
+      (let* ((menubar [[#@NSMenu @(new)] @(autorelease)])
+             (app-menu-item [[#@NSMenuItem @(new)] @(autorelease)])
+             (app-menu [[#@NSMenu @(new)] @(autorelease)])
+             (quit-name @"Quit")
+             (key @"q")
+             (quit-menu-item
+              [[[#@NSMenuItem @(alloc)]
+                @(initWithTitle:action:keyEquivalent:) :pointer quit-name :pointer @(terminate?) :string key]
+               @(autorelease)]))
+        [menubar @(addItem:) :pointer app-menu-item]
+        [app-menu @(addItem:) :pointer quit-menu-item]
+        [app-menu-item @(setSubmenu:) :pointer app-menu]
+        [objc-runtime::ns-app @(setMainMenu:) :pointer menubar] )
+
+      (setf (main-view *application-shim*)
+            [#@NSStackView @(stackViewWithViews:) :pointer [[#@NSArray @(alloc)] @(init)]])
+      (with-point (p (20 20))
+        (let* ((foreign-rect (make-rect 10 10 120 120))
+               (the-window (init-window [#@NSWindow @(alloc)] foreign-rect 1 2 nil)))
+          
+          [(value-for-key the-window "contentView") @(addSubview:) :pointer (main-view *application-shim*)]
+          [the-window @(cascadeTopLeftFromPoint:) :pointer p]
+          [the-window @(setTitle:) :pointer application-name]
+          [the-window @(makeKeyAndOrderFront:) :pointer (cffi:null-pointer)]
+          [ objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
+          [ objc-runtime::ns-app @(run)])))))

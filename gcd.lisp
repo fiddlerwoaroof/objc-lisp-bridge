@@ -33,6 +33,3 @@
        (declare (ignorable ,context-sym))
        ,@body)
      (define-symbol-macro ,name (callback ,name))))
-
-(def-gcd-callback foo-callback (context)
-  (demo-app::show-alert "Uh-oh"))

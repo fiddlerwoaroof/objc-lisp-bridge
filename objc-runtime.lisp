@@ -10,7 +10,7 @@
   (define-foreign-library appkit
     (:darwin (:framework "AppKit")))
   (define-foreign-library expose-stuff
-    (:darwin #p"./libnsrect-expose.dylib")))
+    (:darwin #p"libnsrect-expose.dylib")))
 
 
 (use-foreign-library foundation)
@@ -193,6 +193,8 @@
 (defun make-nsstring (str)
   [[#@NSString @(alloc)] @(initWithCString:encoding:) :string str :uint 1])
 
+(defun extract-nsstring (ns-str)
+  [ns-str @(UTF8String)]s)
 
 (defun get-method-names (thing)
   (mapcar (alexandria:compose #'sel-get-name
