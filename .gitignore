@@ -31,3 +31,4 @@ NSRect-Expose
 .*.sw?
 venv
 /reading-list2org
+/dist/

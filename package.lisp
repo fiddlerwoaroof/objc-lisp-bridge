@@ -27,3 +27,12 @@
    #:add-pointer-ivar
    #:objc-msg-send-int
    #:objc-msg-send-string))
+
+(defpackage :objc-runtime.data-extractors
+  (:use :cl )
+  (:export
+   #:extract-from-objc
+   #:define-extractor
+   #:clear-extractors
+   #:add-extractor
+   #:get-plist))

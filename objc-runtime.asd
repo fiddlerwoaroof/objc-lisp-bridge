@@ -18,4 +18,5 @@
                (:cffi-grovel-file "objc-runtime-types" :depends-on ("package"))
                (:file "readtable" :depends-on ("package"))
                (:file "gcd" :depends-on ("objc-runtime"))
-               (:file "objc-runtime" :depends-on ("package" "readtable" "objc-runtime-types"))))
+               (:file "objc-runtime" :depends-on ("package" "readtable" "objc-runtime-types"))
+               (:file "objc-data-extractors" :depends-on ("objc-runtime" "readtable"))))
