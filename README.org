@@ -21,12 +21,12 @@ lisp's ffi types.
    somewhere quicklisp can find it (e.g. ~/quicklisp/local-projects)
 
 2. Install rsvg-convert:
-    #+BEGIN_SRC sh
+    #+BEGIN_SRC sh :tangle no
 brew install librsvg
     #+END_SRC
    
 3. build + run the demo:
-   #+BEGIN_SRC sh
+   #+BEGIN_SRC sh :tangle no
 make mkapp CCL=/path/to/ccl
 open demo.app
    #+END_SRC
@@ -35,7 +35,7 @@ open demo.app
   
 From demo-app.lisp:
 
-#+BEGIN_SRC lisp
+#+BEGIN_SRC lisp :tangle no
   (defun main ()
     (trivial-main-thread:with-body-in-main-thread (:blocking t)
       [#@NSAutoReleasePool @(new)]
