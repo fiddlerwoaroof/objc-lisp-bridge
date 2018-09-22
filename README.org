@@ -176,7 +176,7 @@ From demo-app.lisp:
   
 *** objc-data-extractor.lisp
 
- #+begin_src lisp :tangle untangled/objc-data-extractors.lisp :noweb yes
+ #+begin_src lisp :tangle objc-data-extractors.lisp :noweb yes
    (defpackage :objc-runtime.data-extractors
      (:use :cl )
      (:export
@@ -264,7 +264,7 @@ From demo-app.lisp:
 
 *** build-reading-list-reader.sh
    
- #+begin_src sh :tangle untangled/build-reading-list-reader.sh
+ #+begin_src sh :tangle build-reading-list-reader.sh
    #!/usr/bin/env bash
    set -eu -x -o pipefail
 
@@ -284,7 +284,7 @@ From demo-app.lisp:
 
 *** build.lisp
 
- #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle untangled/build.lisp
+ #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle build.lisp
    (eval-when (:compile-toplevel :load-toplevel :execute)
      (setf *default-pathname-defaults* (truename "~/git_repos/objc-lisp-bridge/"))
      (load (compile-file "objc-runtime.asd")))
@@ -303,7 +303,7 @@ From demo-app.lisp:
 
 *** reading-list-reader.lisp
 
- #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle untangled/reading-list-reader.lisp 
+ #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle reading-list-reader.lisp 
    (defpackage :reading-list-reader
      (:use :cl )
      (:export ))
@@ -326,3 +326,4 @@ From demo-app.lisp:
            (sb-alien:extern-alien "disable_lossage_handler"
                                   (function sb-alien:void))))
  #+end_src
+ 
