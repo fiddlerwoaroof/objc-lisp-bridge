@@ -1,3 +1,12 @@
+(defpackage :objc-runtime.data-extractors
+  (:use :cl )
+  (:export
+   #:extract-from-objc
+   #:define-extractor
+   #:clear-extractors
+   #:add-extractor
+   #:get-plist))
+
 (in-package :objc-runtime.data-extractors)
 (named-readtables:in-readtable :objc-readtable)
 
@@ -35,7 +44,7 @@
     (mapcar (serapeum:op
               `(if (objc-isa ,obj ,(car _1))
                    (progn ,@(cdr _1))))
-            cases)))
+                   cases)))
 
 (defmacro objc-typecase (form &body ((case-type &body case-handler) &rest cases))
   (alexandria:once-only (form)
@@ -66,32 +75,13 @@
         (t (format t "~&other... ~s~%" (objc-runtime::objc-class-get-name
                                         (objc-runtime::object-get-class obj))))))))
 
-(defvar *objc-extractors* (list)
-  "Functions called to extract specific data types")
-
-(serapeum:eval-always
-  (defun add-extractor (class cb)
-    (unless (member class *objc-extractors* :test 'cffi:pointer-eq :key #'car)
-      (setf *objc-extractors*
-            (merge 'list *objc-extractors* (list (cons class cb))
-                   'objc-subclass-p
-                   :key 'car)))
-    *objc-extractors*))
-
-(defmacro define-extractor (class (o) &body body)
-  `(serapeum:eval-always
-     (add-extractor ,class
-                    (lambda (,o)
-                      ,@body))
-     *objc-extractors*))
-
-(defun clear-extractors ()
-  (setf *objc-extractors* ()))
-
 (defmacro funcall-some (fun &rest args)
   (alexandria:once-only (fun)
     `(if ,fun
          (funcall ,fun ,@args))))
+
+(defvar *objc-extractors* (list)
+  "Functions called to extract specific data types")
 
 (defun extract-from-objc (obj)
   (objc-typecase obj
@@ -110,3 +100,22 @@
     (t (or (funcall-some (cdr (objc-pick-by-type obj *objc-extractors*))
                          obj)
            obj))))
+
+(defmacro define-extractor (class (o) &body body)
+  `(serapeum:eval-always
+     (add-extractor ,class
+                    (lambda (,o)
+                      ,@body))
+     *objc-extractors*))
+
+(defun clear-extractors ()
+  (setf *objc-extractors* ()))
+
+(serapeum:eval-always
+  (defun add-extractor (class cb)
+    (unless (member class *objc-extractors* :test 'cffi:pointer-eq :key #'car)
+      (setf *objc-extractors*
+            (merge 'list *objc-extractors* (list (cons class cb))
+                   'objc-subclass-p
+                   :key 'car)))
+    *objc-extractors*))
