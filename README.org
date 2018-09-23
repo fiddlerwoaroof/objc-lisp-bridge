@@ -110,220 +110,232 @@ From demo-app.lisp:
 
 ** Reading List to Org-file converter
 
- #+name: r-l-r-main
- #+begin_src lisp :tangle no :results no :noweb yes
-   (defun main ()
-     <<disable-sbcl-debugger>>
-     (make-org-file *standard-output*
-                    (translate-plist (get-bookmark-filename))))
- #+end_src
+   The entry-point is fairly unremarkable: it delegates most of the work to other functions and disables the debugger so
+   that this doesn't blow up when an error occurs in non-interactive mode.
 
- #+name: translate-plist
- #+begin_src lisp :tangle no :results no
-   (defparameter *reading-list-location* "Library/Safari/Bookmarks.plist")
-   (defun get-bookmark-filename ()
-     (merge-pathnames *reading-list-location*
-                      (truename "~/")))
-
-   (defun translate-plist (fn)
-     (objc-runtime.data-extractors:extract-from-objc
-      (objc-runtime.data-extractors:get-plist fn)))
- #+end_src
-
- #+name: make-org-file
- #+begin_src lisp :tangle no :results no
-   (defun make-org-file (s bookmarks)
-     (format s "~&* Safari Reading List~%")
-     (serapeum:mapply (serapeum:partial 'make-org-entry s)
+   #+name: r-l-r-main
+   #+begin_src lisp :tangle no :results no :noweb yes
+     (defun main ()
+       <<disable-sbcl-debugger>>
+       (make-org-file *standard-output*
+                      (translate-plist 
+                       (get-bookmark-filename))
                       (get-readinglist-info bookmarks)))
-   (defun make-org-entry (s title url preview tag)
-     (format s "~&** ~a :~{~a:~}~% ~a~2% ~{~<~% ~1,80:;~a~> ~}~%"
-             title (alexandria:ensure-list tag)
-             url
-             (serapeum:tokens preview)))
- #+end_src
+   #+end_src
+   
+   This pair of functions builds an org file from data extracted from the Safari bookmark file.
 
- #+name: translate-data
- #+begin_src lisp :tangle no :results no
-   (defun get-readinglist-info (bookmarks)
-     (mapcar 'extract-link-info
-             (gethash "Children"
-                      (car
-                       (select-child bookmarks
-                                     "com.apple.ReadingList")))))
+   #+name: make-org-file
+   #+begin_src lisp :tangle no :results no
+     (defun make-org-file (s bookmarks reading-list-info)
+       (format s "~&* Safari Reading List~%")
+       (serapeum:mapply (serapeum:partial 'make-org-entry s)
+                        reading-list-info))
 
-   (defun extract-link-info (link)
-     (list (fw.lu:pick '("URIDictionary" "title") link)
-           (fw.lu:pick '("URLString") link)
-           (plump:decode-entities (coerce (fw.lu:pick '("ReadingList" "PreviewText") link) 'simple-string) t)
-           (fw.lu:may (slugify (fw.lu:pick '("ReadingListNonSync" "siteName") link)))))
+     (defun make-org-entry (s title url preview tag)
+       (format s "~&** ~a :~{~a:~}~% ~a~2% ~{~<~% ~1,80:;~a~> ~}~%"
+               title (alexandria:ensure-list tag)
+               url
+               (serapeum:tokens preview)))
+   #+end_src
 
-   (defun slugify (s)
-     (cl-ppcre:regex-replace-all "\\s+"
-                                 (string-downcase s)
-                                 "_"))
+   #+name: translate-plist
+   #+begin_src lisp :tangle no :results no
+     (defparameter *reading-list-location* "Library/Safari/Bookmarks.plist")
+     (defun get-bookmark-filename ()
+       (merge-pathnames *reading-list-location*
+                        (truename "~/")))
 
-   (defun select-child (d title)
-     (flet ((get-title (h)
-              (equal (gethash "Title" h)
-                     title)))
-       (fw.lu:let-each (:be *)
-         (gethash "Children" d)
-         (remove-if-not #'get-title *))))
- #+end_src
+     (defun translate-plist (fn)
+       (objc-runtime.data-extractors:extract-from-objc
+        (objc-runtime.data-extractors:get-plist fn)))
+   #+end_src
+
+   #+name: translate-data
+   #+begin_src lisp :tangle no :results no
+     (defun get-readinglist-info (bookmarks)
+       (mapcar 'extract-link-info
+               (gethash "Children"
+                        (car
+                         (select-child bookmarks
+                                       "com.apple.ReadingList")))))
+
+     (defun extract-link-info (link)
+       (list (fw.lu:pick '("URIDictionary" "title") link)
+             (fw.lu:pick '("URLString") link)
+             (plump:decode-entities (coerce (fw.lu:pick '("ReadingList" "PreviewText") link) 'simple-string) t)
+             (fw.lu:may (slugify (fw.lu:pick '("ReadingListNonSync" "siteName") link)))))
+
+     (defun slugify (s)
+       (cl-ppcre:regex-replace-all "\\s+"
+                                   (string-downcase s)
+                                   "_"))
+
+     (defun select-child (d title)
+       (flet ((get-title (h)
+                (equal (gethash "Title" h)
+                       title)))
+         (fw.lu:let-each (:be *)
+           (gethash "Children" d)
+           (remove-if-not #'get-title *))))
+   #+end_src
 
 ** Appendices
   
 *** objc-data-extractor.lisp
 
- #+begin_src lisp :tangle objc-data-extractors.lisp :noweb yes
-   (defpackage :objc-runtime.data-extractors
-     (:use :cl )
-     (:export
-      #:extract-from-objc
-      #:define-extractor
-      #:clear-extractors
-      #:add-extractor
-      #:get-plist))
+    #+begin_src lisp :tangle objc-data-extractors.lisp :noweb yes
+      (defpackage :objc-runtime.data-extractors
+        (:use :cl )
+        (:export
+         #:extract-from-objc
+         #:define-extractor
+         #:clear-extractors
+         #:add-extractor
+         #:get-plist))
 
-   (in-package :objc-runtime.data-extractors)
-   (named-readtables:in-readtable :objc-readtable)
+      (in-package :objc-runtime.data-extractors)
+      (named-readtables:in-readtable :objc-readtable)
 
-   (defun get-plist (file)
-     [#@NSDictionary @(dictionaryWithContentsOfFile:)
-                     :pointer (objc-runtime::make-nsstring file)])
+      (defun get-plist (file)
+        [#@NSDictionary @(dictionaryWithContentsOfFile:)
+                        :pointer (objc-runtime::make-nsstring file)])
 
-   (defun objc-subclass-p (sub super)
-     (unless (or (cffi:null-pointer-p sub)
-                 (cffi:null-pointer-p super))
-       (or (eql sub super)
-           (= [sub @(isSubclassOfClass:) :pointer [super @(class)]]#
-              1))))
+      (defun objc-subclass-p (sub super)
+        (unless (or (cffi:null-pointer-p sub)
+                    (cffi:null-pointer-p super))
+          (or (eql sub super)
+              (= [sub @(isSubclassOfClass:) :pointer [super @(class)]]#
+                 1))))
 
-   (defun order-objc-classes (classes &rest r &key key)
-     (declare (ignore key))
-     (apply 'stable-sort
-            (copy-seq classes)
-            'objc-subclass-p
-            r))
+      (defun order-objc-classes (classes &rest r &key key)
+        (declare (ignore key))
+        (apply 'stable-sort
+               (copy-seq classes)
+               'objc-subclass-p
+               r))
 
-   (defun objc-isa (obj class)
-     (unless (or (cffi:null-pointer-p obj)
-                 (cffi:null-pointer-p class))
-       (= [obj @(isKindOfClass:) :pointer class]#
-          1)))
+      (defun objc-isa (obj class)
+        (unless (or (cffi:null-pointer-p obj)
+                    (cffi:null-pointer-p class))
+          (= [obj @(isKindOfClass:) :pointer class]#
+             1)))
 
-   (defun objc-pick-by-type (obj pairs)
-     (assoc obj
-            (order-objc-classes pairs :key 'car)
-            :test 'objc-isa))
+      (defun objc-pick-by-type (obj pairs)
+        (assoc obj
+               (order-objc-classes pairs :key 'car)
+               :test 'objc-isa))
 
-   (serapeum:eval-always
-     (defun make-cases (cases obj)
-       (mapcar (serapeum:op
-                 `(if (objc-isa ,obj ,(car _1))
-                      (progn ,@(cdr _1))))
-                      cases)))
+      (serapeum:eval-always
+        (defun make-cases (cases obj)
+          (mapcar (serapeum:op
+                    `(if (objc-isa ,obj ,(car _1))
+                         (progn ,@(cdr _1))))
+                         cases)))
 
-   (defmacro objc-typecase (form &body ((case-type &body case-handler) &rest cases))
-     (alexandria:once-only (form)
-       (let* ((initial-cases `((,case-type ,@case-handler) ,@(butlast cases)))
-              (cases (fw.lu:rollup-list (make-cases initial-cases form)
-                                        (if (eql t (caar (last cases)))
-                                            `((progn ,@(cdar (last cases))))
-                                            (make-cases (last cases) form)))))
-         cases)))
+      (defmacro objc-typecase (form &body ((case-type &body case-handler) &rest cases))
+        (alexandria:once-only (form)
+          (let* ((initial-cases `((,case-type ,@case-handler) ,@(butlast cases)))
+                 (cases (fw.lu:rollup-list (make-cases initial-cases form)
+                                           (if (eql t (caar (last cases)))
+                                               `((progn ,@(cdar (last cases))))
+                                               (make-cases (last cases) form)))))
+            cases)))
 
-   (defun map-nsarray (fn arr)
-     (unless (and (cffi:pointerp arr)
-                  (objc-isa arr #@NSArray))
-       (error "must provide a NSArray pointer"))
-     (loop for x below [arr @(count)]#
-        collect (funcall fn [arr @(objectAtIndex:) :int x])))
+      (defun map-nsarray (fn arr)
+        (unless (and (cffi:pointerp arr)
+                     (objc-isa arr #@NSArray))
+          (error "must provide a NSArray pointer"))
+        (loop for x below [arr @(count)]#
+           collect (funcall fn [arr @(objectAtIndex:) :int x])))
 
-   (defun nsarray-contents (arr)
-     (unless (and (cffi:pointerp arr)
-                  (objc-isa arr #@NSArray))
-       (error "must provide a NSArray pointer"))
-     (dotimes (n [arr @(count)]#)
-       (let ((obj [arr @(objectAtIndex:) :int n ]))
-         (objc-typecase obj
-           (#@NSString (format t "~&string~%"))
-           (#@NSArray (format t "~&array~%"))
-           (#@NSDictionary (format t "~&dictionary~%"))
-           (t (format t "~&other... ~s~%" (objc-runtime::objc-class-get-name
-                                           (objc-runtime::object-get-class obj))))))))
-                                          
-   (defmacro funcall-some (fun &rest args)
-     (alexandria:once-only (fun)
-       `(if ,fun
-            (funcall ,fun ,@args))))
+      (defun nsarray-contents (arr)
+        (unless (and (cffi:pointerp arr)
+                     (objc-isa arr #@NSArray))
+          (error "must provide a NSArray pointer"))
+        (dotimes (n [arr @(count)]#)
+          (let ((obj [arr @(objectAtIndex:) :int n ]))
+            (objc-typecase obj
+              (#@NSString (format t "~&string~%"))
+              (#@NSArray (format t "~&array~%"))
+              (#@NSDictionary (format t "~&dictionary~%"))
+              (t (format t "~&other... ~s~%" (objc-runtime::objc-class-get-name
+                                              (objc-runtime::object-get-class obj))))))))
 
-   <<extractor-framework>>
- #+end_src
+      (defmacro funcall-some (fun &rest args)
+        (alexandria:once-only (fun)
+          `(if ,fun
+               (funcall ,fun ,@args))))
+
+      <<extractor-framework>>
+    #+end_src
 
 *** build-reading-list-reader.sh
    
- #+begin_src sh :tangle build-reading-list-reader.sh
-   #!/usr/bin/env bash
-   set -eu -x -o pipefail
+    #+begin_src sh :tangle build-reading-list-reader.sh
+      #!/usr/bin/env bash
+      set -eu -x -o pipefail
 
-   cd "$(dirname $0)"
-   mkdir -p dist
+      cd "$(dirname $0)"
+      mkdir -p dist
 
-   pushd dist
-   rm -rf fwoar.lisputils
-   git clone https://github.com/fiddlerwoaroof/fwoar.lisputils.git
-   popd
+      pushd dist
+      rm -rf fwoar.lisputils
+      git clone https://github.com/fiddlerwoaroof/fwoar.lisputils.git
+      popd
 
-   export CL_SOURCE_REGISTRY="$PWD/dist//"
-   sbcl --no-userinit \
-        --load ~/quicklisp/setup.lisp \
-        --load build.lisp
- #+end_src
+      export CL_SOURCE_REGISTRY="$PWD/dist//"
+      sbcl --no-userinit \
+           --load ~/quicklisp/setup.lisp \
+           --load build.lisp
+    #+end_src
 
 *** build.lisp
 
- #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle build.lisp
-   (eval-when (:compile-toplevel :load-toplevel :execute)
-     (setf *default-pathname-defaults* (truename "~/git_repos/objc-lisp-bridge/"))
-     (load (compile-file "objc-runtime.asd")))
+    #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle build.lisp
+      (eval-when (:compile-toplevel :load-toplevel :execute)
+        (setf *default-pathname-defaults* (truename "~/git_repos/objc-lisp-bridge/"))
+        (load (compile-file "objc-runtime.asd")))
 
-   (eval-when (:compile-toplevel :load-toplevel :execute)
-     (ql:quickload '(:objc-runtime :yason :plump :cl-ppcre)))
+      (eval-when (:compile-toplevel :load-toplevel :execute)
+        (ql:quickload '(:objc-runtime :yason :plump :cl-ppcre)))
 
-   (load "reading-list-reader.lisp")
+      (load "reading-list-reader.lisp")
 
-   (eval-when (:compile-toplevel :load-toplevel :execute)
-     (sb-ext:save-lisp-and-die "reading-list2org"
-                               :toplevel (intern "MAIN"
-                                                 "READING-LIST-READER")
-                               :executable t))
- #+end_src
+      (eval-when (:compile-toplevel :load-toplevel :execute)
+        (sb-ext:save-lisp-and-die "reading-list2org"
+                                  :toplevel (intern "MAIN"
+                                                    "READING-LIST-READER")
+                                  :executable t))
+    #+end_src
 
 *** reading-list-reader.lisp
 
- #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle reading-list-reader.lisp 
-   (defpackage :reading-list-reader
-     (:use :cl )
-     (:export ))
-   (in-package :reading-list-reader)
+    #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle reading-list-reader.lisp 
+      (defpackage :reading-list-reader
+        (:use :cl )
+        (:export ))
+      (in-package :reading-list-reader)
 
-   (serapeum:eval-always
-     (named-readtables:in-readtable :objc-readtable))
+      (serapeum:eval-always
+        (named-readtables:in-readtable :objc-readtable))
 
-   <<r-l-r-main>>
-   <<translage-plist>>
-   <<make-org-file>>
-   <<translate-data>>
- #+end_src
+      <<r-l-r-main>>
+      <<translage-plist>>
+      <<make-org-file>>
+      <<translate-data>>
+    #+end_src
 
- #+name: disable-sbcl-debugger
- #+begin_src lisp :tangle no
-   ,#+(and build sbcl)
-   (progn (sb-ext:disable-debugger)
-          (sb-alien:alien-funcall
-           (sb-alien:extern-alien "disable_lossage_handler"
-                                  (function sb-alien:void))))
- #+end_src
+    #+name: disable-sbcl-debugger
+    #+begin_src lisp :tangle no
+      ,#+(and build sbcl)
+      (progn (sb-ext:disable-debugger)
+             (sb-alien:alien-funcall
+              (sb-alien:extern-alien "disable_lossage_handler"
+                                     (function sb-alien:void))))
+    #+end_src
  
+
+# Local Variables:
+# fill-column: 120 :
+# End:
