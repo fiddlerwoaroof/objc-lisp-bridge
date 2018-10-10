@@ -10,10 +10,12 @@
                #:serapeum
                #:fwoar.lisputils
                #:cffi
+               #:cffi-libffi
                #:trivial-main-thread
                #:trivial-features
                #:cffi-libffi)
-  :defsystem-depends-on (#:cffi-grovel)
+  :defsystem-depends-on (#:cffi-grovel
+                         #:cffi-libffi)
   :components ((:file "package")
                (:cffi-grovel-file "objc-runtime-types" :depends-on ("package"))
                (:file "readtable" :depends-on ("package"))

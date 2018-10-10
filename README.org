@@ -66,7 +66,7 @@ From demo-app.lisp:
 ** Type-directed Objective-C extractors
 
  #+name: extractor-framework
- #+begin_src lisp :tangle no :results no
+ #+begin_src lisp :tangle no :results no :comments both
    (defvar *objc-extractors* (list)
      "Functions called to extract specific data types")
 
@@ -118,33 +118,39 @@ From demo-app.lisp:
      (defun main ()
        <<disable-sbcl-debugger>>
        (make-org-file *standard-output*
-                      (translate-plist 
-                       (get-bookmark-filename))
-                      (get-readinglist-info bookmarks)))
+                      (get-readinglist-info 
+                       (translate-plist 
+                        (get-bookmark-filename)))))
    #+end_src
    
-   This pair of functions builds an org file from data extracted from the Safari bookmark file.
+   This pair of functions builds an org file from data extracted from the Safari bookmark file. 
 
    #+name: make-org-file
    #+begin_src lisp :tangle no :results no
-     (defun make-org-file (s bookmarks reading-list-info)
+     (defun make-org-file (s reading-list-info)
        (format s "~&* Safari Reading List~%")
        (serapeum:mapply (serapeum:partial 'make-org-entry s)
                         reading-list-info))
 
-     (defun make-org-entry (s title url preview tag)
-       (format s "~&** ~a :~{~a:~}~% ~a~2% ~{~<~% ~1,80:;~a~> ~}~%"
-               title (alexandria:ensure-list tag)
+     (defun make-org-entry (s date title url preview tag)
+       (format s "~&** ~a (~a) :~{~a:~}~% ~a~2% ~{~<~% ~1,80:;~a~> ~}~2%"
+               title
+               (local-time:format-timestring nil date
+                                             :format local-time:+rfc3339-format/date-only+)
+               (alexandria:ensure-list tag)
                url
                (serapeum:tokens preview)))
    #+end_src
+   
+   Here we extract the data from Bookmarks.plist using our polymorphic objc data extractor framework
 
    #+name: translate-plist
    #+begin_src lisp :tangle no :results no
      (defparameter *reading-list-location* "Library/Safari/Bookmarks.plist")
      (defun get-bookmark-filename ()
-       (merge-pathnames *reading-list-location*
-                        (truename "~/")))
+       (uiop:native-namestring
+        (merge-pathnames *reading-list-location*
+                         (truename "~/"))))
 
      (defun translate-plist (fn)
        (objc-runtime.data-extractors:extract-from-objc
@@ -154,37 +160,30 @@ From demo-app.lisp:
    #+name: translate-data
    #+begin_src lisp :tangle no :results no
      (defun get-readinglist-info (bookmarks)
-       (mapcar 'extract-link-info
-               (gethash "Children"
-                        (car
-                         (select-child bookmarks
-                                       "com.apple.ReadingList")))))
+       (sort (mapcar 'extract-link-info
+                     (gethash "Children"
+                              (car
+                               (select-child bookmarks
+                                             "com.apple.ReadingList"))))
+             'local-time:timestamp>
+             :key 'car))
 
      (defun extract-link-info (link)
-       (list (fw.lu:pick '("URIDictionary" "title") link)
+       (list (local-time:parse-rfc3339-timestring (or (fw.lu:pick '("ReadingList" "DateAdded") link)
+                                                      (fw.lu:pick '("ReadingList" "DateLastViewed") link)
+                                                      (fw.lu:pick '("ReadingListNonSync" "DateLastFetched") link)
+                                                      (local-time:now)))
+             (fw.lu:pick '("URIDictionary" "title") link)
              (fw.lu:pick '("URLString") link)
              (plump:decode-entities (coerce (fw.lu:pick '("ReadingList" "PreviewText") link) 'simple-string) t)
              (fw.lu:may (slugify (fw.lu:pick '("ReadingListNonSync" "siteName") link)))))
-
-     (defun slugify (s)
-       (cl-ppcre:regex-replace-all "\\s+"
-                                   (string-downcase s)
-                                   "_"))
-
-     (defun select-child (d title)
-       (flet ((get-title (h)
-                (equal (gethash "Title" h)
-                       title)))
-         (fw.lu:let-each (:be *)
-           (gethash "Children" d)
-           (remove-if-not #'get-title *))))
    #+end_src
 
 ** Appendices
   
 *** objc-data-extractor.lisp
 
-    #+begin_src lisp :tangle objc-data-extractors.lisp :noweb yes
+    #+begin_src lisp :tangle objc-data-extractors.lisp :noweb yes :comments both
       (defpackage :objc-runtime.data-extractors
         (:use :cl )
         (:export
@@ -320,10 +319,26 @@ From demo-app.lisp:
       (serapeum:eval-always
         (named-readtables:in-readtable :objc-readtable))
 
-      <<r-l-r-main>>
-      <<translage-plist>>
+      (defun slugify (s)
+        (cl-ppcre:regex-replace-all "\\s+"
+                                    (string-downcase s)
+                                    "_"))
+
+      (defun select-child (d title)
+        (flet ((get-title (h)
+                 (equal (gethash "Title" h)
+                        title)))
+          (fw.lu:let-each (:be *)
+            (gethash "Children" d)
+            (remove-if-not #'get-title *))))
+
+      <<translate-plist>>
+
       <<make-org-file>>
+
       <<translate-data>>
+
+      <<r-l-r-main>>
     #+end_src
 
     #+name: disable-sbcl-debugger

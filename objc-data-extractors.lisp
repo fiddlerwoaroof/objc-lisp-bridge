@@ -1,3 +1,7 @@
+;; objc-data-extractor.lisp
+
+
+;; [[file:~/git_repos/objc-lisp-bridge/README.org::*objc-data-extractor.lisp][objc-data-extractor.lisp:1]]
 (defpackage :objc-runtime.data-extractors
   (:use :cl )
   (:export
@@ -119,3 +123,4 @@
                    'objc-subclass-p
                    :key 'car)))
     *objc-extractors*))
+;; objc-data-extractor.lisp:1 ends here

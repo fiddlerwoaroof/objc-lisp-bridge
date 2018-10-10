@@ -99,8 +99,10 @@
   (sel o-selector)
   &rest)
 
-(defun objc-msg-send-nsstring (thing selector &rest args)
-  [(apply 'objc-msg-send thing selector args) @(UTF8String)]s)
+;;; This is a macro, because objc-msg-send is a macro.... which makes "apply" impossible
+;;; \o/
+(defmacro objc-msg-send-nsstring (thing selector &rest args)
+  `[[,thing ,selector ,@args] @(UTF8String)]s)
 
 (defcfun (class-copy-method-list "class_copyMethodList" :library foundation)
     :pointer
@@ -159,13 +161,12 @@
   (prop :pointer))
 
 (defun get-classes ()
-  (let ((num-classes (objc-get-class-list (null-pointer) 0)))
+  (let ((num-classes (objc-get-class-list (null-pointer) 0))
+        (result (list)))
     (with-foreign-object (classes :pointer num-classes)
-      (objc-get-class-list classes num-classes)
-      (let ((result (list)))
-        (dotimes (n num-classes (nreverse result))
+      (dotimes (n (objc-get-class-list classes num-classes) (nreverse result))
           (push (mem-aref classes :pointer n)
-                result))))))
+              result)))))
 
 (defgeneric get-methods (class)
   (:method ((class string))
@@ -195,6 +196,9 @@
 
 (defun extract-nsstring (ns-str)
   [ns-str @(UTF8String)]s)
+
+(defun get-method-name (method)
+  (sel-get-name (method-get-name method)))
 
 (defun get-method-names (thing)
   (mapcar (alexandria:compose #'sel-get-name
