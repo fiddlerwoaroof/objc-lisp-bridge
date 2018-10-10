@@ -165,7 +165,7 @@
         (result (list)))
     (with-foreign-object (classes :pointer num-classes)
       (dotimes (n (objc-get-class-list classes num-classes) (nreverse result))
-          (push (mem-aref classes :pointer n)
+        (push (mem-aref classes :pointer n)
               result)))))
 
 (defgeneric get-methods (class)

@@ -45,9 +45,9 @@
 
 (defun get-readinglist-info (bookmarks)
   (sort (mapcar 'extract-link-info
-          (gethash "Children"
-                   (car
-                    (select-child bookmarks
+                (gethash "Children"
+                         (car
+                          (select-child bookmarks
                                         "com.apple.ReadingList"))))
         'local-time:timestamp>
         :key 'car))
