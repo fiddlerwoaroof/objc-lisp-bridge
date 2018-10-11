@@ -8,7 +8,8 @@
    (current-class :initform nil :accessor current-class))
   (:panes (classes :application
                    :incremental-redisplay t
-                   :display-function 'display-classes)
+                   :display-function 'display-classes
+                   :double-buffering t)
           (methods :application
                    :incremental-redisplay t
                    :display-function 'display-methods)
@@ -19,8 +20,9 @@
                          classes methods)
                        int)))
   (:default-initargs
-      :classes (sort (remove-if (serapeum:op (alexandria:starts-with #\_
-                                                                     (objc-runtime::objc-class-get-name _)))
+      :classes (sort (remove-if (serapeum:op
+                                  (alexandria:starts-with #\_
+                                                          (objc-runtime::objc-class-get-name _)))
                                 (objc-runtime::get-classes))
                      #'string-lessp
                      :key 'objc-runtime::objc-class-get-name)))
