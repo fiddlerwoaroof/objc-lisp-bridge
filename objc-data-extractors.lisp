@@ -9,7 +9,8 @@
    #:define-extractor
    #:clear-extractors
    #:add-extractor
-   #:get-plist))
+   #:get-plist
+   #:objc-typecase))
 
 (in-package :objc-runtime.data-extractors)
 (named-readtables:in-readtable :objc-readtable)

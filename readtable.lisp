@@ -47,7 +47,7 @@
                                                                          '(#\) #\(  #\[ #\])))
                                                        collect (read-char s t nil t))
                                                     'string)))
-                            `(objc-look-up-class ,class-name))))
+                            `(ensure-class ,class-name))))
   (:macro-char #\@ :dispatch t)
   (:dispatch-macro-char #\@ #\( (read-until (serapeum:op (char= _ #\)))
                                             'ensure-selector))

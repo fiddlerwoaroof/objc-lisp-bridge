@@ -49,6 +49,13 @@
   (format stream "@(~a)"
           (objc-runtime::get-method-name object)))
 
+(define-presentation-translator string-to-objc-class (string objc-class class-browser
+                                                             :tester ((inp) (objc-runtime:ensure-class inp))
+                                                             :tester-definitive t)
+    (inp)
+  (format *terminal-io* "~&translating ~s to an objc-class" inp)
+  (objc-runtime:ensure-class inp))
+
 (defun display-classes (frame pane)
   (updating-output (pane :unique-id (or (visible-classes frame)
                                         (classes frame))
@@ -75,7 +82,9 @@
              (format pane "   Method: ~a~%" (objc-runtime::get-method-name method)))))))
 
 (define-class-browser-command (com-get-methods :name t :menu t) ((the-class objc-class :gesture :select))
-  (setf (current-class *application-frame*) the-class))
+  (if (cffi:pointerp the-class)
+      (setf (current-class *application-frame*) the-class)
+      (format *terminal-io* "~&The value ~s is not a pointer to a class, but a ~s" the-class (type-of the-class))))
 
 
 (define-class-browser-command (com-refresh-classes :name t :menu t) ()

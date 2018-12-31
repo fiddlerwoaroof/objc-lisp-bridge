@@ -22,3 +22,22 @@
                (:file "gcd" :depends-on ("objc-runtime"))
                (:file "objc-runtime" :depends-on ("package" "readtable" "objc-runtime-types"))
                (:file "objc-data-extractors" :depends-on ("objc-runtime" "readtable"))))
+
+(defsystem :objc-runtime/scripting-bridge
+  :description ""
+  :author "Ed L <edward@elangley.org>"
+  :license "MIT"
+  :depends-on (:objc-runtime
+               :data-lens)
+  :components ((:file "scripting-bridge")))
+
+(defsystem :objc-runtime/clim-objc-browser
+  :description ""
+  :author "Ed L <edward@elangley.org>"
+  :license "MIT"
+  :pathname #+lp-systems #p"projects:objc-lisp-bridge;" #-lp-systems nil
+  :depends-on (:objc-runtime
+               :serapeum
+               :alexandria
+               :mcclim)
+  :components ((:file "clim-objc-browser")))

@@ -7,9 +7,13 @@ mkdir -p dist
 pushd dist
 rm -rf fwoar.lisputils
 git clone https://github.com/fiddlerwoaroof/fwoar.lisputils.git
+rm -rf data-lens
+git clone https://github.com/fiddlerwoaroof/data-lens.git
 popd
 
 export CL_SOURCE_REGISTRY="$PWD/dist//"
 sbcl --no-userinit \
+     --disable-debugger \
      --load ~/quicklisp/setup.lisp \
-     --load build.lisp
+     --eval "(progn (pushnew :$1 *features*)
+                    (load \"build.lisp\"))"

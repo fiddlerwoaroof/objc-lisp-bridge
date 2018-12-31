@@ -26,7 +26,10 @@
    #:ensure-wrapped-objc-class
    #:add-pointer-ivar
    #:objc-msg-send-int
-   #:objc-msg-send-string))
+   #:objc-msg-send-string
+   #:make-nsstring
+   #:ensure-class
+   #:ensure-selector))
 
 (defpackage :objc-runtime.data-extractors
   (:use :cl )

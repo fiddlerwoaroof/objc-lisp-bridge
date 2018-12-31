@@ -47,7 +47,7 @@
 (serapeum:eval-always
   (defctype sizet
       :ulong
-      #+32-bit-target :uint))
+    #+32-bit-target :uint))
 
 (defcfun (class-add-ivar "class_addIvar" :library foundation)
     :boolean
@@ -63,6 +63,24 @@
                   (floor (log (foreign-type-size :pointer)
                               2))
                   "@"))
+
+
+#+nil
+(defun make-app-delegate-class (outlets)
+  (let ((app-delegate-class (objc-runtime::objc-allocate-class-pair
+                             #@NSObject "AppDelegate" 0)))
+    (objc-runtime:add-pointer-ivar app-delegate-class "window")
+    (objc-runtime:add-pointer-ivar app-delegate-class "delegate")
+
+    (loop for outlet in outlets do
+         (objc-runtime:add-pointer-ivar app-delegate-class outlet))
+
+    app-delegate-class))
+
+(defun %setup-objc-class (name base ivars)
+  (let ((class-pair (objc-allocate-class-pair base name 0)))
+    (loop for ivar in ivars
+         )))
 
 (defcfun (objc-class-get-name "class_getName" :library foundation)
     :string
@@ -190,6 +208,9 @@
             (push (mem-aref methods :pointer n)
                   result)))))))
 
+(defmethod get-methods (f)
+  (list))
+
 
 (defun make-nsstring (str)
   [[#@NSString @(alloc)] @(initWithCString:encoding:) :string str :uint 1])
@@ -216,10 +237,16 @@
        do (format stream "~&~4t\"~a\" -> \"~a\"~%" class superclass))))
 
 (defparameter *selector-cache* (make-hash-table :test 'equal))
+(defparameter *class-cache* (make-hash-table :test 'equal))
 
 (serapeum:eval-always
   (defun normalize-selector-name (sel-name)
     (substitute #\: #\? sel-name)))
+
+(defun ensure-class (name)
+  (let ((objc-class (objc-look-up-class name)))
+    (when (and objc-class (not (null-pointer-p objc-class)))
+      (alexandria.0.dev:ensure-gethash name *class-cache* objc-class))))
 
 (defun ensure-selector (name)
   (alexandria:ensure-gethash name
@@ -297,7 +324,8 @@
                                    :name name
                                    :pointer objc-class)))))))
 
-;; TODO: should this error if there is no corresponding selector? Or should we let that fall through to message sending?
+;; TODO: should this error if there is no corresponding selector?
+;;         Or should we let that fall through to message sending?
 (defun %ensure-wrapped-objc-selector (name target-class result-type args)
   (assert (= (count #\: name)
              (length args))
