@@ -21,7 +21,8 @@
                (:file "readtable" :depends-on ("package"))
                (:file "gcd" :depends-on ("objc-runtime"))
                (:file "objc-runtime" :depends-on ("package" "readtable" "objc-runtime-types"))
-               (:file "objc-data-extractors" :depends-on ("objc-runtime" "readtable"))))
+               (:file "objc-data-extractors" :depends-on ("objc-runtime" "readtable"))
+               (:file "manipulators" :depends-on ("objc-data-extractors" "readtable" "objc-runtime"))))
 
 (defsystem :objc-runtime/scripting-bridge
   :description ""
@@ -35,7 +36,6 @@
   :description ""
   :author "Ed L <edward@elangley.org>"
   :license "MIT"
-  :pathname #+lp-systems #p"projects:objc-lisp-bridge;" #-lp-systems nil
   :depends-on (:objc-runtime
                :serapeum
                :alexandria

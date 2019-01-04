@@ -39,3 +39,8 @@
    #:clear-extractors
    #:add-extractor
    #:get-plist))
+
+(uiop:define-package :objc.manipulators
+    (:use :cl :data-lens)
+  (:export :sel :ext :<> :add-index :<count)
+  (:reexport :data-lens))
