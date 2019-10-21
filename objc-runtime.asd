@@ -6,16 +6,16 @@
     :author "Ed L <edward@elangley.org>"
     :license "MIT"
     :depends-on (#:alexandria
-                 #:uiop
-                 #:data-lens
-                 #:serapeum
-                 #:fwoar-lisputils
                  #:cffi
                  #:cffi-libffi
-                 #:trivial-main-thread
+                 #:cffi-libffi
+                 #:data-lens
                  #:fset
+                 #:fwoar-lisputils
+                 #:serapeum
                  #:trivial-features
-                 #:cffi-libffi)
+                 #:trivial-main-thread
+                 #:uiop)
     :defsystem-depends-on (#:cffi-grovel
                            #:cffi-libffi)
     :components ((:file "package")
