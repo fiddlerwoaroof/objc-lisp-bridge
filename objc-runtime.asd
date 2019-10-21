@@ -7,8 +7,9 @@
   :license "MIT"
   :depends-on (#:alexandria
                #:uiop
+               #:data-lens
                #:serapeum
-               #:fwoar.lisputils
+               #:fwoar-lisputils
                #:cffi
                #:cffi-libffi
                #:trivial-main-thread
