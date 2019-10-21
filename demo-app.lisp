@@ -170,12 +170,23 @@
            :pointer p])))
 
 ;#+null
-(defun old-code ()
+(defun main ()
   #+sbcl
   (sb-int:set-floating-point-modes :traps '())
 
+  (load "~/quicklisp/setup.lisp")
+  (funcall (intern "QUICKLOAD"
+                   (find-package :QL))
+           :swank)
+
+  #+nil
+  (funcall (intern "CREATE-SERVER"
+                   (find-package :swank))
+           :port 5060
+           :dont-close t)
+
   (trivial-main-thread:with-body-in-main-thread (:blocking t)
-    [#@NSAutoReleasePool @(new)]
+    [#@NSAutoreleasePool @(new)]
     [#@NSApplication @(sharedApplication)]
     #+nil
     [objc-runtime::ns-app @(setActivationPolicy:) :int 0]
@@ -203,19 +214,25 @@
 (defclass application-shim ()
   ((%main-view :initarg :main-view :accessor main-view)))
 
-(defparameter *application-shim* (make-instance 'application-shim))
-
-                                        ;#+nil
-(defun main ()
+(defvar *application-shim*
+  (make-instance 'application-shim))
+;;#+nil
+(defun old-main ()
   (load "~/quicklisp/setup.lisp")
-  (funcall (intern "QUICKLOAD" (find-package :QL)) :swank)
-  (funcall (intern "CREATE-SERVER" (find-package :swank)) :port 5060 :dont-close t)
+  (funcall (intern "QUICKLOAD"
+                   (find-package :QL))
+           :swank)
+  #+nil
+  (funcall (intern "CREATE-SERVER"
+                   (find-package :swank))
+           :port 5060
+           :dont-close t)
 
-  (trivial-main-thread:with-body-in-main-thread (:blocking t)
+  (trivial-main-thread:with-body-in-main-thread (:blocking nil)
     #+sbcl
     (sb-int:set-floating-point-modes :traps '())
 
-    [#@NSAutoReleasePool @(new)]
+    [#@NSAutoreleasePool @(new)]
     [#@NSApplication @(sharedApplication)]
 
     (format t "~&app: ~s~%" objc-runtime::ns-app)
@@ -229,19 +246,20 @@
              (quit-name @"Quit")
              (key @"q")
              (quit-menu-item
-              [[[#@NSMenuItem @(alloc)]
-                @(initWithTitle:action:keyEquivalent:) :pointer quit-name :pointer @(terminate?) :string key]
-               @(autorelease)]))
+               [[[#@NSMenuItem @(alloc)]
+                 @(initWithTitle:action:keyEquivalent:) :pointer quit-name :pointer @(terminate?) :string key]
+                @(autorelease)]))
         [menubar @(addItem:) :pointer app-menu-item]
         [app-menu @(addItem:) :pointer quit-menu-item]
         [app-menu-item @(setSubmenu:) :pointer app-menu]
         [objc-runtime::ns-app @(setMainMenu:) :pointer menubar] )
 
       (setf (main-view *application-shim*)
-            [#@NSStackView @(stackViewWithViews:) :pointer [[#@NSArray @(alloc)] @(init)]])
+            [#@NSStackView @(stackViewWithViews:)
+                           :pointer [[#@NSArray @(alloc)] @(init)]])
       (with-point (p (20 20))
         (let* ((foreign-rect (make-rect 10 10 120 120))
-               (the-window (init-window [#@NSWindow @(alloc)] foreign-rect 1 2 nil)))
+               (the-window (init-window [#@NSWindow @(alloc)] foreign-rect 15 2 nil)))
           
           [(value-for-key the-window "contentView") @(addSubview:) :pointer (main-view *application-shim*)]
           [the-window @(cascadeTopLeftFromPoint:) :pointer p]
