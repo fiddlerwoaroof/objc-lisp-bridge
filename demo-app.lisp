@@ -18,6 +18,10 @@
   (b :char)
   (c :boolean))
 
+(defmacro selector-lambda (selector &rest args)
+  `(lambda (receiver)
+     [receiver ,selector ,@args]))
+
 (cffi:defcfun (init-with-frame "initWithFrame")
     :pointer
   (thing :pointer)
@@ -25,7 +29,7 @@
 
 (cffi:defcfun (print-rect "printRect")
     :void
-  (rect (:struct objc-runtime::ns-rect)))
+  (rect (:struct objc-runtime:ns-rect)))
 
 (cffi:defcfun (set-uncaught-exception-handler "set_uncaught_exception_handler"
                                               :library objc-runtime::expose-stuff)
@@ -121,15 +125,28 @@
   [[cls @(alloc)] @(init)])
 
 (defun make-button-delegate (button cb)
-  (let ((my-class (objc-runtime::objc-allocate-class-pair #@NSObject "ButtonDel" 0)))
-    (objc-runtime::class-add-method my-class @(doMagic) cb "v@:@")
-    (fw.lu:prog1-bind (result (alloc-init my-class))
-      [button @(setTarget) :pointer result]
-      [button @(setAction) :pointer @(doMagic)])))
+  (objc-runtime.data-extractors:objc-typecase button
+    (#@NSButton (let ((my-class (objc-runtime::objc-allocate-class-pair #@NSObject "ButtonDel" 0)))
+                  (objc-runtime::class-add-method my-class @(doMagic) cb "v@:@")
+                  (fw.lu:prog1-bind (result (alloc-init my-class))
+                    [button @(setTarget:) :pointer result]
+                    [button @(setAction:) :pointer @(doMagic)])))
+    (t (format t "~&The button is not a button~%"))))
 
 (defun make-app-delegate-class (outlets)
   (let ((app-delegate-class (objc-runtime::objc-allocate-class-pair
                              #@NSObject "AppDelegate" 0)))
+    (objc-runtime:add-pointer-ivar app-delegate-class "window")
+    (objc-runtime:add-pointer-ivar app-delegate-class "delegate")
+
+    (loop for outlet in outlets do
+         (objc-runtime:add-pointer-ivar app-delegate-class outlet))
+
+    app-delegate-class))
+
+(defun make-app-delegate-class-with-props (foo outlets)
+  (let ((app-delegate-class (objc-runtime::objc-allocate-class-pair
+                             #@NSObject foo 0)))
     (objc-runtime:add-pointer-ivar app-delegate-class "window")
     (objc-runtime:add-pointer-ivar app-delegate-class "delegate")
 
@@ -143,8 +160,8 @@
   ;; find and activate the nib
   (let* ((bundle [#@NSBundle @(mainBundle)])
          (nib [[#@NSNib @(alloc)] @(initWithNibNamed:bundle:)
-                                  :pointer (objc-runtime::make-nsstring name)
-                                  :pointer bundle]))
+               :pointer (objc-runtime::make-nsstring name)
+               :pointer bundle]))
     (cffi:with-foreign-object (p :pointer)
       ;; TODO: is dropping p a problem here? The docs say something relevant.
       ;;       must investigate.
