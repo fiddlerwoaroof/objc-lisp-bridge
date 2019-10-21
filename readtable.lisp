@@ -10,42 +10,50 @@
   (lambda (s c b)
     (declare (ignore c b))
     (let ((class-name (coerce (loop for next-char = (peek-char nil s nil nil t)
-                                 while next-char
-                                 until (funcall test next-char)
-                                 collect (read-char s t nil t)
-                                 finally (when (and (not (member next-char
-                                                                 stop-before-chars))
-                                                    (funcall test next-char))
-                                           (read-char s t nil t)))
+                                    while next-char
+                                    until (funcall test next-char)
+                                    collect (read-char s t nil t)
+                                    finally (when (and (not (member next-char
+                                                                    stop-before-chars))
+                                                       (funcall test next-char))
+                                              (read-char s t nil t)))
 
                               'string)))
       `(,symbol-prefix ,class-name))))
 
+(defun read-objc-form (s char)
+  (declare (ignore char))
+  (flet ((get-call-form (safe-p result-type base-form)
+           (if safe-p
+               `(safe-objc-msg-send ,result-type)
+               `(,base-form))))
+    (let* ((info (read-delimited-list #\] s t))
+           (safe-p (when (eql #\? (peek-char nil s nil #\p t))
+                     (read-char s t nil t)))
+           (msg-send (case (peek-char nil s nil #\p t)
+                       (#\# (read-char s t nil t) (get-call-form safe-p 'num 'objc-msg-send-int))
+                       (#\& (read-char s t nil t) (get-call-form safe-p 'id 'objc-msg-send))
+                       (#\@ (read-char s t nil t) (get-call-form safe-p 'nsstring 'objc-msg-send-nsstring))
+                       (#\b (read-char s t nil t) (get-call-form safe-p 'bool 'objc-msg-send-bool))
+                       (#\s (read-char s t nil t) (get-call-form safe-p 'string 'objc-msg-send-string))
+                       (t                         (get-call-form safe-p 'id 'objc-msg-send)))))
+      (when info
+        (destructuring-bind (obj message . args) info
+          `(,@msg-send ,obj ,message ,@args))))))
+
 (named-readtables:defreadtable :objc-readtable
   (:merge :standard)
   (:syntax-from :standard #\) #\])
-  (:macro-char #\[ (lambda (s char)
-                     char
-                     (let ((info (read-delimited-list #\] s t))
-                           (msg-send (case (peek-char nil s nil #\p t)
-                                       (#\# (read-char s t nil t) 'objc-msg-send-int)
-                                       (#\s (read-char s t nil t) 'objc-msg-send-string)
-                                       (#\@ (read-char s t nil t) 'objc-msg-send-nsstring)
-                                       (#\& (read-char s t nil t) 'objc-msg-send)
-                                       (t 'objc-msg-send))))
-                       (when info
-                         (destructuring-bind (obj message . args) info
-                           `(,msg-send ,obj ,message ,@args)))))
-               nil)
+  (:macro-char #\[ 'read-objc-form nil)
   (:dispatch-macro-char #\# #\@
                         (lambda (s c b)
                           c b
                           (let ((class-name (coerce (loop for c = (peek-char nil s nil nil t)
-                                                       until (or (null c)
-                                                                 (serapeum:whitespacep c)
-                                                                 (member c
-                                                                         '(#\) #\(  #\[ #\])))
-                                                       collect (read-char s t nil t))
+                                                          until (or (null c)
+                                                                    (serapeum:whitespacep c)
+                                                                    (member c
+                                                                            '(#\) #\(  #\[ #\])))
+                                                          collect (read-char s t nil t))
                                                     'string)))
                             `(ensure-class ,class-name))))
   (:macro-char #\@ :dispatch t)
