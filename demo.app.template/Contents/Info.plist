@@ -8,5 +8,7 @@
     <string>com.fwoar.demo-app</string>
     <key>CFBundleIconFile</key>
     <string>demo-app</string>
+    <key>CFBundleDisplayName</key>
+    <string>Demo App</string>
   </dict>
 </plist>
