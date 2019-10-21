@@ -168,6 +168,17 @@
   (cls o-class)
   (name :string))
 
+(defcstruct objc-property-attribute-t
+  (name :string)
+  (value :string))
+
+(defcfun (class-add-property "class_addProperty" :library foundation)
+    :pointer
+  (cls o-class)
+  (name :string)
+  (attributes (:pointer (:struct objc-property-attribute-t)))
+  (attribute-count :unsigned-int))
+
 (defcfun (property-copy-attribute-value "property_copyAttributeValue" :library foundation)
     :string
   (prop :pointer)
@@ -246,7 +257,7 @@
 (defun ensure-class (name)
   (let ((objc-class (objc-look-up-class name)))
     (when (and objc-class (not (null-pointer-p objc-class)))
-      (alexandria.0.dev:ensure-gethash name *class-cache* objc-class))))
+      (alexandria:ensure-gethash name *class-cache* objc-class))))
 
 (defun ensure-selector (name)
   (alexandria:ensure-gethash name
