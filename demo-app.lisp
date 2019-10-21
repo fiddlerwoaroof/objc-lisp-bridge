@@ -214,6 +214,35 @@
 (defclass application-shim ()
   ((%main-view :initarg :main-view :accessor main-view)))
 
+(cffi:defcfun (%set-string-value "objc_msgSend")
+    :void
+  (cls objc-runtime::o-class)
+  (sel objc-runtime::o-selector)
+  (value :pointer))
+(defun set-string-value (control string)
+  (prog1 control
+    (%set-string-value control @(setStringValue:)
+                       (objc-runtime:make-nsstring string))))
+
+(defun label (text)
+  (let ((view [[#@NSTextField @(alloc)] @(init)]))
+    (prog1 view
+      (set-string-value view text))))
+
+(defun button (title)
+  (trivial-main-thread:with-body-in-main-thread (:blocking t)
+    [#@NSButton @(buttonWithTitle:target:action:)
+                :pointer (objc-runtime:make-nsstring title)
+                :pointer #@NSButton
+                :pointer @(alloc)]))
+
+(defun init-in-main-thread (instance)
+  (prog1 instance
+    [instance @(performSelectorOnMainThread:withObject:waitUntilDone:)
+              :pointer @(init)
+              :pointer (cffi:null-pointer)
+              :bool t]))
+
 (defvar *application-shim*
   (make-instance 'application-shim))
 ;;#+nil
