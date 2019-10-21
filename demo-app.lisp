@@ -245,6 +245,27 @@
 
 (defvar *application-shim*
   (make-instance 'application-shim))
+(defun wait-for-events ()
+  (let ((event [objc-runtime::ns-app @(nextEventMatchingMask:untilDate:inMode:dequeue:)
+                                     :unsigned-long 18446744073709551615
+                                     :pointer [#@NSDate @(distantFuture)]
+                                     :pointer @"kCFRunLoopDefaultMode"
+                                     :int 1]))
+    [objc-runtime::ns-app @(sendEvent:) :pointer event]
+    event))
+
+(defun tick ()
+  (wait-for-events))
+
+(defun task-thread ()
+  (bt:make-thread (lambda ()
+                    (trivial-main-thread:with-body-in-main-thread (:blocking t)
+                      [#@NSEvent @(startPeriodicEventsAfterDelay:withPeriod:) :double 0.0d0 :double 0.01d0])
+                    (loop
+                      (trivial-main-thread:with-body-in-main-thread (:blocking t)
+                        (tick))))
+                  :name "Cocoa Event Loop Feeder"))
+
 ;;#+nil
 (defun old-main ()
   (load "~/quicklisp/setup.lisp")
@@ -295,4 +316,4 @@
           [the-window @(setTitle:) :pointer application-name]
           [the-window @(makeKeyAndOrderFront:) :pointer (cffi:null-pointer)]
           [ objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
-          [ objc-runtime::ns-app @(run)])))))
+          (task-thread))))))
