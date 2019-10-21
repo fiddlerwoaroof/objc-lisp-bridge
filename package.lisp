@@ -44,3 +44,12 @@
     (:use :cl :data-lens)
   (:export :sel :ext :<> :add-index :<count)
   (:reexport :data-lens))
+
+(defpackage :objc-runtime.bundle-utils
+  (:use :cl)
+  (:export #:bundle-resource-root
+           #:application-support-directory
+           #:setup-bundle-logical-pathnames
+           #:ensure-application-support
+           #:print-for-config
+           #:read-from-config))
