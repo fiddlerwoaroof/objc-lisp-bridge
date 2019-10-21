@@ -25,9 +25,10 @@
                               :executable t)))
 #+safari2org-beta
 (progn
-  (load "scripting-bridge.lisp")
+  (load (compile-file "scripting-bridge.lisp"))
+  (load (compile-file "safari-tool.lisp"))
   (eval-when (:compile-toplevel :load-toplevel :execute)
     (sb-ext:save-lisp-and-die "safari2org-beta"
                               :toplevel (intern "SAFARI-2-MAIN"
-                                                "OBJC.SCRIPTING-BRIDGE")
+                                                "FWOAR.SAFARI-TOOL")
                               :executable t)))

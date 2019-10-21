@@ -9,7 +9,8 @@
   (:panes (classes :application
                    :incremental-redisplay t
                    :display-function 'display-classes
-                   :double-buffering t)
+                   #+nil(:double-buffering t)
+                   )
           (methods :application
                    :incremental-redisplay t
                    :display-function 'display-methods)

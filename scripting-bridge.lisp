@@ -67,6 +67,7 @@
 
 (defmacro comment (&body b)
   b ())
+
 #+nil
 (comment
   (defun kebab-case (s)
@@ -115,5 +116,4 @@
 
   (define-objc-call @(init) () :pointer)
   (define-objc-call @(sharedApplication) () :pointer)
-
   )

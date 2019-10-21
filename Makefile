@@ -1,13 +1,11 @@
 CCL=ccl
 
 dylib: nsrect-expose.m
-	clang -shared \
-			-framework Cocoa \
-			nsrect-expose.m \
-			-o libnsrect-expose.dylib
+	clang -shared -framework Cocoa nsrect-expose.m -o libnsrect-expose.dylib
 
 demo-app: dylib
 	$(CCL) --load ~/quicklisp/setup.lisp \
+		    --eval '(ql:quickload :data-lens)' \
 		   --load save.lisp
 
 demo-app.iconset: demo-app.svg
