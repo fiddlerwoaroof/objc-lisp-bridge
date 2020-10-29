@@ -219,6 +219,7 @@
   (cls objc-runtime::o-class)
   (sel objc-runtime::o-selector)
   (value :pointer))
+
 (defun set-string-value (control string)
   (prog1 control
     (%set-string-value control @(setStringValue:)
@@ -259,7 +260,9 @@
 
 (defun task-thread ()
   (bt:make-thread (lambda ()
+                    #+(or)
                     (trivial-main-thread:with-body-in-main-thread (:blocking t)
+                      [#@NSEvent @(stopPeriodicEvents)]
                       [#@NSEvent @(startPeriodicEventsAfterDelay:withPeriod:) :double 0.0d0 :double 0.01d0])
                     (loop
                       (trivial-main-thread:with-body-in-main-thread (:blocking t)
@@ -268,16 +271,6 @@
 
 ;;#+nil
 (defun old-main ()
-  (load "~/quicklisp/setup.lisp")
-  (funcall (intern "QUICKLOAD"
-                   (find-package :QL))
-           :swank)
-  #+nil
-  (funcall (intern "CREATE-SERVER"
-                   (find-package :swank))
-           :port 5060
-           :dont-close t)
-
   (trivial-main-thread:with-body-in-main-thread (:blocking nil)
     #+sbcl
     (sb-int:set-floating-point-modes :traps '())
@@ -317,3 +310,58 @@
           [the-window @(makeKeyAndOrderFront:) :pointer (cffi:null-pointer)]
           [ objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
           (task-thread))))))
+
+(cffi:defcfun (%get-view-frame "objc_msgSend_stret")
+    :void
+  (out (:pointer (:struct objc-runtime:ns-rect)))
+  (class :pointer)
+  (sel :pointer))
+
+(cffi:defcfun (%init-with-frame "objc_msgSend")
+    :pointer
+  (class :pointer)
+  (sel :pointer)
+  (frame (:struct objc-runtime:ns-rect)))
+
+(defmacro new-msg-send (selector ((&rest arg-types) return-type))
+  (let ((arg-syms (mapcar (lambda (_) (gensym (symbol-name _)))
+                          arg-types)))
+    `(lambda ,(cons 'target arg-syms)
+       (cffi:foreign-funcall "objc_msgSend"
+                             :pointer target
+                             :pointer ,selector
+                             ,@(mapcan #'list arg-types arg-syms)
+                             ,return-type))))
+
+(defmacro make-view-dictionary (&rest objc-values)
+  (alexandria:with-gensyms (selector)
+    `(let ((,selector (new-msg-send @(dictionaryWithObjectsAndKeys:)
+                          ((,@(mapcar (lambda (_) _ :pointer) objc-values) :pointer)
+                           :pointer))))
+       (funcall ,selector ,@objc-values (cffi:null-pointer)))))
+
+#+(or)
+(defun text-view (parent-view)
+  (let ((text-view [#@NSTextView @(alloc)]))
+
+    
+    
+
+
+    (trivial-main-thread:with-body-in-main-thread (:blocking nil)
+      (cffi:with-foreign-pointer (v (cffi:foreign-type-size '(:struct objc-runtime::ns-rect)))
+        (%get-view-frame v *window-view* @(frame))
+        (init-with-frame *text-view* v))
+      [*window-view* @(addSubview:) :pointer *text-view*]?)
+
+    (defparameter *view-dictionary* 
+      )
+    ))
+
+#+(or)
+(progn
+  (defparameter *window-view*
+    [(main-view *application-shim*) @(superview)])
+  (trivial-main-thread:with-body-in-main-thread (:blocking nil)
+    [(main-view *application-shim*) @(removeFromSuperview)]?
+    ))
