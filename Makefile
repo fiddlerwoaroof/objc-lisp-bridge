@@ -11,17 +11,20 @@ demo-app: dylib
 demo-app.iconset: demo-app.svg
 	rm -rf demo-app.iconset
 	mkdir -p demo-app.iconset
-	rsvg-convert -h 16  demo-app.svg >	demo-app.iconset/icon_16x16.png
-	rsvg-convert -h 32  demo-app.svg >	demo-app.iconset/icon_16x16@2x.png
-	rsvg-convert -h 32  demo-app.svg >	demo-app.iconset/icon_32x32.png
-	rsvg-convert -h 64  demo-app.svg >	demo-app.iconset/icon_32x32@2x.png
-	rsvg-convert -h 64  demo-app.svg >	demo-app.iconset/icon_64x64.png
-	rsvg-convert -h 128	demo-app.svg > demo-app.iconset/icon_64x64@2x.png
-	rsvg-convert -h 128	demo-app.svg > demo-app.iconset/icon_128x128.png
-	rsvg-convert -h 256	demo-app.svg > demo-app.iconset/icon_128x128@2x.png
-	rsvg-convert -h 256	demo-app.svg > demo-app.iconset/icon_256x256.png
-	rsvg-convert -h 512	demo-app.svg > demo-app.iconset/icon_256x256@2x.png
-	rsvg-convert -h 512	demo-app.svg > demo-app.iconset/icon_512x512.png
+	rsvg-convert -w 16   -h 16   demo-app.svg > demo-app.iconset/icon_16x16.png
+	rsvg-convert -w 32   -h 32   demo-app.svg > demo-app.iconset/icon_16x16@2x.png
+	rsvg-convert -w 32   -h 32   demo-app.svg > demo-app.iconset/icon_32x32.png
+	rsvg-convert -w 64   -h 64   demo-app.svg > demo-app.iconset/icon_32x32@2x.png
+	rsvg-convert -w 64   -h 64   demo-app.svg > demo-app.iconset/icon_64x64.png
+	rsvg-convert -w 128	-h 128	demo-app.svg > demo-app.iconset/icon_64x64@2x.png
+	rsvg-convert -w 128	-h 128	demo-app.svg > demo-app.iconset/icon_128x128.png
+	rsvg-convert -w 256	-h 256	demo-app.svg > demo-app.iconset/icon_128x128@2x.png
+	rsvg-convert -w 256	-h 256	demo-app.svg > demo-app.iconset/icon_256x256.png
+	rsvg-convert -w 512	-h 512	demo-app.svg > demo-app.iconset/icon_256x256@2x.png
+	rsvg-convert -w 512	-h 512	demo-app.svg > demo-app.iconset/icon_512x512.png
+	rsvg-convert -w 1024	-h 1024	demo-app.svg > demo-app.iconset/icon_512x512@2x.png
+	rsvg-convert -w 1024	-h 1024	demo-app.svg > demo-app.iconset/icon_1024x1024.png
+	rsvg-convert -w 2048	-h 2048	demo-app.svg > demo-app.iconset/icon_1024x1024@2x.png
 
 mkapp: dylib demo-app demo-app.iconset
 	rm -rf demo.app
