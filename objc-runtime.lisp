@@ -399,7 +399,7 @@
 (defmacro with-selectors ((&rest selector-specs) &body body)
   `(let (,@(mapcar (fw.lu:destructuring-lambda ((sym foreign-selector))
                      `(,sym (ensure-selector ,foreign-selector)))
-                   (mapcar (fw.lu:glambda (spec)
+                   (mapcar (fwoar.anonymous-gf:glambda (spec)
                              (:method ((spec symbol))
                                (list spec (normalize-selector-name
                                            (string-downcase spec))))

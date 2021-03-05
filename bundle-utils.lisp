@@ -30,6 +30,9 @@
           ("BUNDLE:SUPPORT;USER;**;*.*.*" ,(application-support-directory :user))
           ("BUNDLE:SUPPORT;LOCAL;**;*.*.*" ,(application-support-directory :local)))))
 
+;; FIXME: Compile time error with CCL setting up logical-pathname-translations
+;; Bundle
+#+(or)
 (defun ensure-application-support ()
   (setup-bundle-logical-pathnames)
   (translate-logical-pathname
