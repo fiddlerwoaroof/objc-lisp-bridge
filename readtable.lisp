@@ -30,16 +30,20 @@
     (let* ((info (read-delimited-list #\] s t))
            (safe-p (when (eql #\? (peek-char nil s nil #\p t))
                      (read-char s t nil t)))
-           (msg-send (case (peek-char nil s nil #\p t)
-                       (#\# (read-char s t nil t) (get-call-form safe-p 'num 'objc-msg-send-int))
-                       (#\& (read-char s t nil t) (get-call-form safe-p 'id 'objc-msg-send))
-                       (#\@ (read-char s t nil t) (get-call-form safe-p 'nsstring 'objc-msg-send-nsstring))
-                       (#\b (read-char s t nil t) (get-call-form safe-p 'bool 'objc-msg-send-bool))
-                       (#\s (read-char s t nil t) (get-call-form safe-p 'string 'objc-msg-send-string))
-                       (t                         (get-call-form safe-p 'id 'objc-msg-send)))))
+           (return-type (case (peek-char nil s nil #\p t)
+                          (#\# (read-char s t nil t) :int #+(or)(get-call-form safe-p 'num 'objc-msg-send-int))
+                          (#\& (read-char s t nil t) :pointer #+(or)(get-call-form safe-p 'id 'objc-msg-send))
+                          (#\@ (read-char s t nil t) :pointer #+(or)(get-call-form safe-p 'nsstring 'objc-msg-send-nsstring))
+                          (#\b (read-char s t nil t) :bool #+(or)(get-call-form safe-p 'bool 'objc-msg-send-bool))
+                          (#\s (read-char s t nil t) :string #+(or)(get-call-form safe-p 'string 'objc-msg-send-string))
+                          (t                         :pointer #+(or)(get-call-form safe-p 'id 'objc-msg-send)))))
       (when info
         (destructuring-bind (obj message . args) info
-          `(,@msg-send ,obj ,message ,@args))))))
+          `(foreign-funcall "objc_msgSend"
+                            :pointer ,obj
+                            :pointer ,message
+                            ,@args
+                            ,return-type))))))
 
 (named-readtables:defreadtable :objc-readtable
   (:merge :standard)
