@@ -1,7 +1,7 @@
 CCL=ccl
 
 dylib: nsrect-expose.m
-	clang -shared -framework Cocoa nsrect-expose.m -o libnsrect-expose.dylib
+	clang -arch x86_64 -arch arm64 -shared -framework Cocoa nsrect-expose.m -o libnsrect-expose.dylib
 
 demo-app: dylib
 	$(CCL) --load ~/quicklisp/setup.lisp \
