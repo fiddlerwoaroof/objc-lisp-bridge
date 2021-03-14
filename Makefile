@@ -29,7 +29,8 @@ demo-app.iconset: demo-app.svg
 mkapp: dylib demo-app demo-app.iconset
 	rm -rf demo.app
 	cp -R demo.app.template demo.app
-	mkdir -p demo.app/Contents/{Resources,MacOS}
+	mkdir -p demo.app/Contents/{Resources,MacOS,Frameworks}
 	iconutil -c icns demo-app.iconset -o demo.app/Contents/Resources/demo-app.icns
 	ibtool --compile demo.app/Contents/Resources/MainMenu.nib MainMenu.xib
-	cp demo-app libnsrect-expose.dylib demo.app/Contents/MacOS
+	cp demo-app demo.app/Contents/MacOS
+	cp libnsrect-expose.dylib demo.app/Contents/MacOS

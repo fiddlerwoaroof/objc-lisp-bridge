@@ -10,22 +10,30 @@
     (format t "~&Exxception: ~a~%" [exception reason])
     (values)))
 
-(cffi:defcfun (init-window "initWindow")
-    :pointer
-  (window :pointer)
-  (rect :pointer)
-  (a :char)
-  (b :char)
-  (c :boolean))
+(defun init-window (window rect a b c)
+  (format t "~&got rect: ~s" rect)
+  (cffi:foreign-funcall "objc_msgSend"
+                        :pointer window
+                        :pointer @(initWithContentRect:)
+                        :pointer window
+                        (:struct objc-runtime::ns-rect) rect
+                        :char a
+                        :char b
+                        :boolean c
+                        :pointer))
 
 (defmacro selector-lambda (selector &rest args)
   `(lambda (receiver)
      [receiver ,selector ,@args]))
 
-(cffi:defcfun (init-with-frame "initWithFrame")
-    :pointer
-  (thing :pointer)
-  (rect :pointer))
+(defun init-with-frame (thing rect)
+  (format t "~&got rect: ~s" rect)
+  (cffi:foreign-funcall "objc_msgSend"
+                        :pointer thing
+                        :pointer @(initWithFrame:)
+                        (:struct objc-runtime::ns-rect) rect
+                        :pointer))
+
 
 (cffi:defcfun (print-rect "printRect")
     :void
@@ -110,7 +118,7 @@
   (load "~/quicklisp/setup.lisp")
   (funcall (intern "QUICKLOAD" (find-package :QL)) :swank)
   (funcall (intern "CREATE-SERVER" (find-package :swank)) :port 5060 :dont-close t)
-  
+
   (show-alert "Started swank on 5060"))
 
 (cffi:defcallback alert-action :void ((a :pointer) (b :pointer) (sender :pointer))
@@ -199,7 +207,7 @@
                                 "profitButton")))
 
     (load-nib "MainMenu.nib")
-    
+
     (let ((app-delegate [objc-runtime::ns-app @(delegate)]))
       (make-button-delegate (value-for-key app-delegate "actionButton")
                             (cffi:callback do-things-action))
@@ -207,7 +215,7 @@
                             (cffi:callback alert-action))
       (make-button-delegate (value-for-key app-delegate "profitButton")
                             (cffi:callback profit-action)))
-    
+
     [objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
     [objc-runtime::ns-app @(run)]))
 
@@ -303,7 +311,7 @@
       (with-point (p (20 20))
         (let* ((foreign-rect (make-rect 10 10 120 120))
                (the-window (init-window [#@NSWindow @(alloc)] foreign-rect 15 2 nil)))
-          
+
           [(value-for-key the-window "contentView") @(addSubview:) :pointer (main-view *application-shim*)]
           [the-window @(cascadeTopLeftFromPoint:) :pointer p]
           [the-window @(setTitle:) :pointer application-name]
@@ -344,8 +352,8 @@
 (defun text-view (parent-view)
   (let ((text-view [#@NSTextView @(alloc)]))
 
-    
-    
+
+
 
 
     (trivial-main-thread:with-body-in-main-thread (:blocking nil)
@@ -354,7 +362,7 @@
         (init-with-frame *text-view* v))
       [*window-view* @(addSubview:) :pointer *text-view*]?)
 
-    (defparameter *view-dictionary* 
+    (defparameter *view-dictionary*
       )
     ))
 
