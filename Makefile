@@ -1,10 +1,10 @@
-CCL=ccl
+CL=sbcl
 
 dylib: nsrect-expose.m
 	clang -arch x86_64 -arch arm64 -shared -framework Cocoa nsrect-expose.m -o libnsrect-expose.dylib
 
 demo-app: dylib
-	$(CCL) --load ~/quicklisp/setup.lisp \
+	$(CL) --load ~/quicklisp/setup.lisp \
 		    --eval '(ql:quickload :data-lens)' \
 		   --load save.lisp
 
