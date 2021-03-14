@@ -1,9 +1,8 @@
 CL=sbcl
 
-dylib: nsrect-expose.m
-	clang -arch x86_64 -arch arm64 -shared -framework Cocoa nsrect-expose.m -o libnsrect-expose.dylib
+all: mkapp
 
-demo-app: dylib
+demo-app:
 	$(CL) --load ~/quicklisp/setup.lisp \
 		    --eval '(ql:quickload :data-lens)' \
 		   --load save.lisp
@@ -26,11 +25,10 @@ demo-app.iconset: demo-app.svg
 	zsh convert.sh demo-app.svg 1024 demo-app.iconset/icon_1024x1024.png
 	zsh convert.sh demo-app.svg 2048 demo-app.iconset/icon_1024x1024@2x.png
 
-mkapp: dylib demo-app demo-app.iconset
+mkapp: demo-app demo-app.iconset
 	rm -rf demo.app
 	cp -R demo.app.template demo.app
 	mkdir -p demo.app/Contents/{Resources,MacOS,Frameworks}
 	iconutil -c icns demo-app.iconset -o demo.app/Contents/Resources/demo-app.icns
 	ibtool --compile demo.app/Contents/Resources/MainMenu.nib MainMenu.xib
 	cp demo-app demo.app/Contents/MacOS
-	cp libnsrect-expose.dylib demo.app/Contents/MacOS

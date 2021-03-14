@@ -39,6 +39,7 @@
     :void
   (rect (:struct objc-runtime:ns-rect)))
 
+#+(or)
 (cffi:defcfun (set-uncaught-exception-handler "set_uncaught_exception_handler"
                                               :library objc-runtime::expose-stuff)
     :void
