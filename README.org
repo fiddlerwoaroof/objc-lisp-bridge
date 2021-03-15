@@ -1,5 +1,5 @@
 * Intro
-  
+
 CCL and LispWorks and other implementations have their own bridges to
 the objective-c runtime.  This project is an attempt to create a
 bridge that only uses CFFI so that arbitrary lisp implementations can
@@ -20,19 +20,23 @@ lisp's ffi types.
    https://github.com/fiddlerwoaroof/fwoar.lisputils and put it
    somewhere quicklisp can find it (e.g. ~/quicklisp/local-projects)
 
-2. Install rsvg-convert:
+2. clone cffi from https://github.com/cffi/cffi and put it in the same
+   place (on Big Sur, at least, I need changes that haven't made it to
+   Quicklisp)
+
+3. Install rsvg-convert:
     #+BEGIN_SRC sh :tangle no
-brew install librsvg
+      brew install librsvg
     #+END_SRC
-   
-3. build + run the demo:
+
+4. build + run the demo:
    #+BEGIN_SRC sh :tangle no
-make mkapp CCL=/path/to/ccl
-open demo.app
+     make mkapp CL=/path/to/cl
+     open demo.app
    #+END_SRC
 
 * Show me the code!
-  
+
 From demo-app.lisp:
 
 #+BEGIN_SRC lisp :tangle no
@@ -48,7 +52,7 @@ From demo-app.lisp:
                                   "profitButton")))
 
       (demo-app::load-nib "MainMenu")
-      
+
       (let ((app-delegate [objc-runtime::ns-app @(delegate)]))
         (demo-app::make-button-delegate (value-for-key app-delegate "actionButton")
                               (cffi:callback do-things-action))
@@ -56,7 +60,7 @@ From demo-app.lisp:
                               (cffi:callback alert-action))
         (demo-app::make-button-delegate (value-for-key app-delegate "profitButton")
                               (cffi:callback profit-action)))
-      
+
       [objc-runtime::ns-app @(activateIgnoringOtherApps:) :boolean t]
       [objc-runtime::ns-app @(run)]))
 
@@ -118,12 +122,12 @@ From demo-app.lisp:
      (defun main ()
        <<disable-sbcl-debugger>>
        (make-org-file *standard-output*
-                      (get-readinglist-info 
-                       (translate-plist 
+                      (get-readinglist-info
+                       (translate-plist
                         (get-bookmark-filename)))))
    #+end_src
-   
-   This pair of functions builds an org file from data extracted from the Safari bookmark file. 
+
+   This pair of functions builds an org file from data extracted from the Safari bookmark file.
 
    #+name: make-org-file
    #+begin_src lisp :tangle no :results no
@@ -141,7 +145,7 @@ From demo-app.lisp:
                url
                (serapeum:tokens preview)))
    #+end_src
-   
+
    Here we extract the data from Bookmarks.plist using our polymorphic objc data extractor framework
 
    #+name: translate-plist
@@ -180,7 +184,7 @@ From demo-app.lisp:
    #+end_src
 
 ** Appendices
-  
+
 *** objc-data-extractor.lisp
 
     #+begin_src lisp :tangle objc-data-extractors.lisp :noweb yes :comments both
@@ -270,7 +274,7 @@ From demo-app.lisp:
     #+end_src
 
 *** build-reading-list-reader.sh
-   
+
     #+begin_src sh :tangle build-reading-list-reader.sh
       #!/usr/bin/env bash
       set -eu -x -o pipefail
@@ -310,7 +314,7 @@ From demo-app.lisp:
 
 *** reading-list-reader.lisp
 
-    #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle reading-list-reader.lisp 
+    #+begin_src lisp :mkdirp yes :results no :noweb yes :tangle reading-list-reader.lisp
       (defpackage :reading-list-reader
         (:use :cl )
         (:export ))
@@ -349,7 +353,7 @@ From demo-app.lisp:
               (sb-alien:extern-alien "disable_lossage_handler"
                                      (function sb-alien:void))))
     #+end_src
- 
+
 
 # Local Variables:
 # fill-column: 120 :

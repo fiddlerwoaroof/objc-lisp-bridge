@@ -1,7 +1,8 @@
 CCL=ccl
 
 dylib: nsrect-expose.m
-	clang -shared \
+	clang -arch x86_64 -arch arm64 \
+	      -shared \
 			-framework Cocoa \
 			nsrect-expose.m \
 			-o libnsrect-expose.dylib

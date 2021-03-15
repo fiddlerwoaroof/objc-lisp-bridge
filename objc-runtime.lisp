@@ -5,18 +5,15 @@
 (serapeum:eval-always
   (cffi:define-foreign-library cocoa
     (:darwin (:framework "Cocoa")))
-  (define-foreign-library foundation
+  (cffi:define-foreign-library foundation
     (:darwin (:framework "Foundation")))
-  (define-foreign-library appkit
-    (:darwin (:framework "AppKit")))
-  (define-foreign-library expose-stuff
-    (:darwin #p"libnsrect-expose.dylib")))
+  (cffi:define-foreign-library appkit
+    (:darwin (:framework "AppKit"))))
 
 
 (use-foreign-library foundation)
 (use-foreign-library cocoa)
 (use-foreign-library appkit)
-(use-foreign-library expose-stuff)
 
 (defctype o-class :pointer)
 (defctype o-selector :pointer)
@@ -340,7 +337,7 @@
   (let* ((class-cache (objc-class-cache (closer-mop:class-prototype (find-class 'objc-class))))
          (cached (gethash name class-cache)))
     (if cached
-        cached 
+        cached
         (let ((objc-class (objc-look-up-class name)))
           (if (null-pointer-p objc-class)
               (error 'no-such-objc-class :wanted-name name)
@@ -353,7 +350,7 @@
 ;;         Or should we let that fall through to message sending?
 (defun %ensure-wrapped-objc-selector (name target-class result-type args)
   (assert (= (count #\: name)
-             (length args))
+            (length args))
           (name args)
           "Invalid number of arg types for selector ~s" name)
 
@@ -361,7 +358,7 @@
          (cached (gethash (list name target-class)
                           class-cache)))
     (if cached
-        cached 
+        cached
         (let ((objc-selector (ensure-selector name)))
           (setf (gethash (list name target-class) class-cache)
                 (make-instance 'objc-selector
@@ -399,7 +396,7 @@
 (defmacro with-selectors ((&rest selector-specs) &body body)
   `(let (,@(mapcar (fw.lu:destructuring-lambda ((sym foreign-selector))
                      `(,sym (ensure-selector ,foreign-selector)))
-                   (mapcar (fw.lu:glambda (spec)
+                   (mapcar (fwoar.anonymous-gf:glambda (spec)
                              (:method ((spec symbol))
                                (list spec (normalize-selector-name
                                            (string-downcase spec))))
@@ -411,10 +408,9 @@
 
 (defmacro with-typed-selectors ((&rest defs) &body body)
   (let ((expanded-defs (loop for ((name objc-name) args ret-type) in defs
-                          collect
-                            `((,name (&rest r) (apply ,name r))
-                              (,name (%ensure-wrapped-objc-selector ,objc-name ',ret-type ',args))))))
+                             collect
+                             `((,name (&rest r) (apply ,name r))
+                               (,name (%ensure-wrapped-objc-selector ,objc-name ',ret-type ',args))))))
     `(let (,@(mapcar #'second expanded-defs))
        (flet (,@(mapcar #'first expanded-defs))
          ,@body))))
-
