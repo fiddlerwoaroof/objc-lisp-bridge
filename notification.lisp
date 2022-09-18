@@ -4,7 +4,8 @@
    #:main-loop-ticker
    #:dnc
    #:observe-notifications
-   #:*mailbox*))
+   #:*mailbox*
+   #:setup-notifications))
 (in-package :objc.notification)
 (serapeum:eval-always
   (named-readtables:in-readtable :objc-readtable))
@@ -31,7 +32,7 @@
     [notification @(userInfo)])))
 
 (defvar *notification-handler*)
-(defun setup-delegate ()
+(defun setup-notifications ()
   (if (boundp '*notification-handler*)
       *notification-handler*
       (let ((delegate-class
@@ -66,5 +67,5 @@
                   :pointer (cffi:null-pointer)]
              (error 'notifications-not-initialized))
        (setup-and-retry ()
-         (setup-delegate)
+         (setup-notifications)
          (go start)))))
