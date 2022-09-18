@@ -142,6 +142,10 @@
     :pointer
   (method :pointer))
 
+(defcfun (method-get-type-encoding "method_getTypeEncoding")
+    :string
+  (method :pointer))
+
 (defcfun (sel-get-name "sel_getName")
     :string
   (sel o-selector))
@@ -414,3 +418,17 @@
     `(let (,@(mapcar #'second expanded-defs))
        (flet (,@(mapcar #'first expanded-defs))
          ,@body))))
+
+(defun description (nsobject)
+  [nsobject @(description)]@)
+
+(defun future-ns-date (seconds)
+  [[#@NSDate @(alloc)]
+   @(initWithTimeIntervalSinceNow:)
+   :double (coerce seconds 'double-float)])
+
+(defun tick-ns-runloop (run-loop &optional (time 0.5d0))
+  (let ((date (future-ns-date time)))
+    (unwind-protect [run-loop @(runUntilDate:)
+                              :pointer date]
+      [date @(release)])))

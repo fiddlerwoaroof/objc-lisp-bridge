@@ -34,6 +34,15 @@
                :data-lens)
   :components ((:file "scripting-bridge")))
 
+(defsystem :objc-runtime/notifications
+  :description ""
+  :author "Ed L <edward@elangley.org>"
+  :license "MIT"
+  :depends-on (:objc-runtime
+               :trivial-main-thread
+               (:require :sb-concurrency))
+  :components ((:file "notification")))
+
 (defsystem :objc-runtime/clim-objc-browser
   :description ""
   :author "Ed L <edward@elangley.org>"
