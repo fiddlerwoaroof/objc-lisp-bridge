@@ -17,7 +17,7 @@
                    :pointer (objc-runtime:make-nsstring bundle-id)])
 
 (defun itunes-app ()
-  (app "com.apple.iTunes"))
+  (app "com.apple.Music"))
 
 (defun safari-app ()
   (app "com.apple.Safari"))
@@ -81,7 +81,7 @@
   (defun get-method-symbol (selector-name package)
     (funcall (alexandria:compose (lambda (x) (intern x package))
                                  #'string-upcase
-                                 (lambda (x) (substitute #\- #\: 
+                                 (lambda (x) (substitute #\- #\:
                                                          (string-trim ":-" x)))
                                  'kebab-case)
              selector-name))
