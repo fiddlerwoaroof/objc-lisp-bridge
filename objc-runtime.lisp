@@ -121,7 +121,7 @@
   (numMethods (:pointer :int)))
 
 (defcfun (method-get-name "method_getName")
-    :pointer
+    :string
   (method :pointer))
 
 (defcfun (method-get-type-encoding "method_getTypeEncoding")
