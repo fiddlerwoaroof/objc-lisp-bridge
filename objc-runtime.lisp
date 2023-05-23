@@ -221,7 +221,7 @@
 
 
 (defun make-nsstring (str)
-  [[#@NSString @(alloc)] @(initWithCString:encoding:) :string str :uint 1])
+  [[#@NSString @(alloc)] @(initWithCString:encoding:) :string str :uint 4])
 
 (defun extract-nsstring (ns-str)
   [ns-str @(UTF8String)]s)
