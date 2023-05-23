@@ -96,33 +96,15 @@
     o-selector
   (name :string))
 
-(defcfun (objc-msg-send-int "objc_msgSend")
-    :int
-  (cls o-class)
-  (sel o-selector)
-  &rest)
-
-(defcfun (objc-msg-send-string "objc_msgSend")
-    :string
-  (cls o-class)
-  (sel o-selector)
-  &rest)
-
-(defcfun (objc-msg-send "objc_msgSend")
-    :pointer
-  (cls o-class)
-  (sel o-selector)
-  &rest)
-
 (defmacro safe-objc-msg-send (result-type thing selector &rest args)
   (alexandria:once-only (thing selector)
     `(if [,thing @(respondsToSelector:) :pointer ,selector]b
          ,(ccase result-type
-            (string `[,thing ,selector ,@args]s)
-            (nsstring `[,thing ,selector ,@args]@)
-            (num `[,thing ,selector ,@args]#)
-            (bool `[,thing ,selector ,@args]b)
-            (id `[,thing ,selector ,@args]))
+            (:string `[,thing ,selector ,@args]s)
+            (:nsstring `[,thing ,selector ,@args]@)
+            (:pointer `[,thing ,selector ,@args])
+            (:int `[,thing ,selector ,@args]#)
+            (:bool `[,thing ,selector ,@args]b))
          (error "invalid selector"))))
 
 ;;; This is a macro, because objc-msg-send is a macro.... which makes "apply" impossible

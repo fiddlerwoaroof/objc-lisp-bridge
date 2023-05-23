@@ -21,25 +21,38 @@
                               'string)))
       `(,symbol-prefix ,class-name))))
 
+(defmacro objc-send (obj message return &rest args)
+  (let* ((return-t (case return
+                     (:nsstring :pointer)
+                     (t return)))
+         (result `(cffi:foreign-funcall "objc_msgSend"
+                                        :pointer ,obj
+                                        :pointer ,message
+                                        ,@args
+                                        ,return-t)))
+    (case return
+      (:nsstring `(objc-send ,result
+                             (ensure-selector "UTF8String")
+                             :string))
+      (t result))))
+
 (defun read-objc-form (s char)
   (declare (ignore char))
-  (flet ((get-call-form (safe-p result-type base-form)
-           (if safe-p
-               `(safe-objc-msg-send ,result-type)
-               `(,base-form))))
-    (let* ((info (read-delimited-list #\] s t))
-           (safe-p (when (eql #\? (peek-char nil s nil #\p t))
-                     (read-char s t nil t)))
-           (msg-send (case (peek-char nil s nil #\p t)
-                       (#\# (read-char s t nil t) (get-call-form safe-p 'num 'objc-msg-send-int))
-                       (#\& (read-char s t nil t) (get-call-form safe-p 'id 'objc-msg-send))
-                       (#\@ (read-char s t nil t) (get-call-form safe-p 'nsstring 'objc-msg-send-nsstring))
-                       (#\b (read-char s t nil t) (get-call-form safe-p 'bool 'objc-msg-send-bool))
-                       (#\s (read-char s t nil t) (get-call-form safe-p 'string 'objc-msg-send-string))
-                       (t                         (get-call-form safe-p 'id 'objc-msg-send)))))
-      (when info
-        (destructuring-bind (obj message . args) info
-          `(,@msg-send ,obj ,message ,@args))))))
+  (let* ((info (read-delimited-list #\] s t))
+         (safe-p (when (eql #\? (peek-char nil s nil #\p t))
+                   (read-char s t nil t)))
+         (return-t (case (peek-char nil s nil #\p t)
+                     (#\# (read-char s t nil t) :int)
+                     (#\& (read-char s t nil t) :pointer)
+                     (#\@ (read-char s t nil t) :nsstring)
+                     (#\b (read-char s t nil t) :bool)
+                     (#\s (read-char s t nil t) :string)
+                     (t                         :pointer))))
+    (when info
+      (destructuring-bind (obj message . args) info
+        (if safe-p
+            `(safe-objc-msg-send ,return-t ,obj ,message ,@args)
+            `(objc-send ,obj ,message ,return-t ,@args))))))
 
 (named-readtables:defreadtable :objc-readtable
   (:merge :standard)
