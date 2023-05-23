@@ -10,7 +10,6 @@
   (cffi:define-foreign-library appkit
     (:darwin (:framework "AppKit"))))
 
-
 (use-foreign-library foundation)
 (use-foreign-library cocoa)
 (use-foreign-library appkit)
@@ -70,14 +69,14 @@
     (objc-runtime:add-pointer-ivar app-delegate-class "delegate")
 
     (loop for outlet in outlets do
-         (objc-runtime:add-pointer-ivar app-delegate-class outlet))
+      (objc-runtime:add-pointer-ivar app-delegate-class outlet))
 
     app-delegate-class))
 
 (defun %setup-objc-class (name base ivars)
   (let ((class-pair (objc-allocate-class-pair base name 0)))
     (loop for ivar in ivars
-         )))
+          )))
 
 (defcfun (objc-class-get-name "class_getName" :library foundation)
     :string
