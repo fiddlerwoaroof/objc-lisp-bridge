@@ -19,7 +19,7 @@
                          #:cffi-libffi)
   :components ((:file "package")
                (:cffi-grovel-file "objc-runtime-types" :depends-on ("package" "readtable"))
-               (:file "bundle-utils" :depends-on ("package"))
+               (:file "bundle-utils" :depends-on ("package" "readtable"))
                (:file "readtable" :depends-on ("package"))
                (:file "gcd" :depends-on ("objc-runtime"))
                (:file "objc-runtime" :depends-on ("package" "readtable" "objc-runtime-types"))
