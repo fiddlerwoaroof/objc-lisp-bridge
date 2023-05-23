@@ -22,6 +22,41 @@
 (defun safari-app ()
   (app "com.apple.Safari"))
 
+(defclass sbsafari ()
+  ((%app-ref :reader app-ref :initform (safari-app))))
+
+(defgeneric windows (object)
+  (:method ((object sbsafari))
+    (mapcar 'safari-window
+            (objc-runtime.data-extractors:extract-from-objc
+             [(app-ref object) @(windows)]?))))
+
+(fw.lu:defclass+ safari-window ()
+  ((%window-ref :reader window-ref :initarg :window-ref)))
+
+(defgeneric name (thing)
+  (:method ((thing safari-window))
+    [(window-ref thing) @(name)]@))
+
+(defgeneric tabs (object)
+  (:method ((object safari-window))
+    (mapcar 'safari-tab
+            (objc-runtime.data-extractors:extract-from-objc
+             [(window-ref object) @(tabs)]))))
+
+(fw.lu:defclass+ safari-tab ()
+  ((%tab-ref :reader tab-ref :initarg :tab-ref)))
+
+(defgeneric source (tab)
+  (:method ((tab safari-tab))
+    [(tab-ref tab) @(source)]@))
+(defgeneric text (tab)
+  (:method ((tab safari-tab))
+    [(tab-ref tab) @(text)]@))
+(defgeneric url (tab)
+  (:method ((tab safari-tab))
+    [(tab-ref tab) @(URL)]@))
+
 (defun current-track-info (itunes)
   (let* ((current-track [itunes @(currentTrack)]))
     (format t "~&Track: ~A (~v,1,0,'⋆<~>)~%Album: ~a (~v,1,0,'*<~>)~%Artist: ~a~%"
@@ -63,7 +98,6 @@
                (prog1 (apply f count args)
                  (incf count))))
         (apply hof #'nested-lambda hof-args)))))
-
 
 (defmacro comment (&body b)
   b ())
